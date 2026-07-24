@@ -335,6 +335,7 @@ export class AltarArea extends Area
             {
                 this.game.ticker.wait(2, () =>
                 {
+                    mesh.geometry.computeBoundingSphere()
                     mesh.geometry.boundingSphere.center.y = 2
                     mesh.geometry.boundingSphere.radius = 5
                 })

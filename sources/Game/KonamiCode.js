@@ -52,8 +52,8 @@ export class KonamiCode
     async activate()
     {
         const files = [
-            'vehicle/oldSchool.glb',
-            'vehicle/default.glb'
+            'vehicle/oldSchool-compressed.glb',
+            'vehicle/default-compressed.glb'
         ]
         
         const resources = await this.game.resourcesLoader.load([

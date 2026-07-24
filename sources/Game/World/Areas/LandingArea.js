@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu'
-import { color, float, Fn, instancedArray, mix, normalWorld, positionGeometry, step, texture, uniform, uv, vec2, vec3, vec4 } from 'three/tsl'
+import { color, float, Fn, instancedArray, step, texture, uniform, uv, vec2, vec3, vec4 } from 'three/tsl'
 import { Inputs } from '../../Inputs/Inputs.js'
 import { InteractivePoints } from '../../InteractivePoints.js'
 import { Area } from './Area.js'
@@ -15,6 +15,7 @@ export class LandingArea extends Area
         this.localTime = uniform(0)
 
         this.setLetters()
+        this.setNameText()
         this.setKiosk()
         this.setControls()
         this.setBonfire()
@@ -27,14 +28,62 @@ export class LandingArea extends Area
 
         for(const reference of references)
         {
+            reference.visible = false
             const physical = reference.userData.object.physical
-            physical.colliders[0].setActiveEvents(this.game.RAPIER.ActiveEvents.CONTACT_FORCE_EVENTS)
-            physical.colliders[0].setContactForceEventThreshold(5)
-            physical.onCollision = (force, position) =>
+            if(physical && physical.colliders[0])
             {
-                this.game.audio.groups.get('hitBrick').playRandomNext(force, position)
+                physical.colliders[0].setActiveEvents(0)
             }
         }
+    }
+
+    setNameText()
+    {
+        const references = this.references.items.get('letters')
+        if(!references || references.length === 0) return
+
+        const centerPosition = new THREE.Vector3()
+        for(const reference of references)
+        {
+            centerPosition.add(reference.position)
+        }
+        centerPosition.divideScalar(references.length)
+        centerPosition.y += 2.5
+
+        const canvas = document.createElement('canvas')
+        canvas.width = 1024
+        canvas.height = 192
+
+        const ctx = canvas.getContext('2d')
+        ctx.fillStyle = '#000000'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+        ctx.font = '900 96px "Nunito"'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillStyle = '#ffffff'
+        ctx.fillText('MUHAMMED RASAL', canvas.width / 2, canvas.height / 2)
+
+        const nameTexture = new THREE.Texture(canvas)
+        nameTexture.minFilter = THREE.NearestFilter
+        nameTexture.magFilter = THREE.NearestFilter
+        nameTexture.needsUpdate = true
+
+        const material = new THREE.MeshBasicNodeMaterial({ transparent: true, side: THREE.DoubleSide })
+        const nameOutput = Fn(() =>
+        {
+            const alpha = texture(nameTexture, uv()).r
+            alpha.lessThan(0.5).discard()
+            return vec4(vec3(1), 1)
+        })
+        material.outputNode = nameOutput()
+
+        const geometry = new THREE.PlaneGeometry(12, 2.25)
+        const mesh = new THREE.Mesh(geometry, material)
+        mesh.position.copy(centerPosition)
+        mesh.rotation.x = -Math.PI * 0.1
+        mesh.renderOrder = 5
+        this.game.scene.add(mesh)
     }
 
     setKiosk()

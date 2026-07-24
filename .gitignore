@@ -7,3 +7,4 @@ dist
 .autosave
 .wav
 !static/sounds/music/*.wav
+.env.example

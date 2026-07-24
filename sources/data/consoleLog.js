@@ -1,13 +1,13 @@
 import * as THREE from 'three/webgpu'
 
 const text = `
-██████╗ ██████╗ ██╗   ██╗███╗   ██╗ ██████╗ ██╗███████╗                   
-██╔══██╗██╔══██╗██║   ██║████╗  ██║██╔═══██╗╚═╝██╔════╝                   
-██████╔╝██████╔╝██║   ██║██╔██╗ ██║██║   ██║   ███████╗                   
-██╔══██╗██╔══██╗██║   ██║██║╚██╗██║██║   ██║   ╚════██║                   
-██████╔╝██║  ██║╚██████╔╝██║ ╚████║╚██████╔╝   ███████║                   
-╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝    ╚══════╝                   
-                                                                       
+███╗   ███╗██╗   ██╗██╗  ██╗ █████╗ ███╗   ███╗███╗   ███╗███████╗██████╗ 
+████╗ ████║██║   ██║██║  ██║██╔══██╗████╗ ████║████╗ ████║██╔════╝██╔══██╗
+██╔████╔██║██║   ██║███████║███████║██╔████╔██║██╔████╔██║█████╗  ██║  ██║
+██║╚██╔╝██║██║   ██║██╔══██║██╔══██║██║╚██╔╝██║██║╚██╔╝██║██╔══╝  ██║  ██║
+██║ ╚═╝ ██║╚██████╔╝██║  ██║██║  ██║██║ ╚═╝ ██║██║ ╚═╝ ██║███████╗██████╔╝
+╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝     ╚═╝╚══════╝╚═════╝ 
+                                                                        
 ██████╗  ██████╗ ██████╗ ████████╗███████╗ ██████╗ ██╗     ██╗ ██████╗ 
 ██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝██╔═══██╗██║     ██║██╔═══██╗
 ██████╔╝██║   ██║██████╔╝   ██║   █████╗  ██║   ██║██║     ██║██║   ██║
@@ -21,15 +21,15 @@ const text = `
 ╚═══════════════════════╝
 
 ╔═ Socials ═══════════════╗
-║ Mail           ⇒ simon.bruno.77@gmail.com
-║ X              ⇒ https://x.com/bruno_simon
-║ BlueSKy        ⇒ https://bsky.app/profile/bruno-simon.bsky.social
+║ Mail           ⇒ muhammed.rasal@example.com
+║ X              ⇒ https://x.com/muhammed_rasal
+║ BlueSKy        ⇒ https://bsky.app/profile/muhammed-rasal.bsky.social
 ║ Discord public ⇒ https://discord.com/channels/769928116701233152/1445064878384480288
 ║ Discord PM     ⇒ https://discord.com/users/202907325722263553
-║ Youtube        ⇒ https://www.youtube.com/@BrunoSimon
-║ Twitch         ⇒ https://www.twitch.tv/bruno_simon_dev
-║ GitHub         ⇒ https://github.com/brunosimon
-║ LinkedIn       ⇒ https://www.linkedin.com/in/simonbruno77/
+║ Youtube        ⇒ https://www.youtube.com/@MuhammedRasal
+║ Twitch         ⇒ https://www.twitch.tv/muhammed_rasal
+║ GitHub         ⇒ https://github.com/muhammed-rasal
+║ LinkedIn       ⇒ https://www.linkedin.com/in/muhammed-rasal/
 ╚═══════════════════════╝
 
 ╔═ Debug ═══════════════╗
@@ -55,12 +55,12 @@ const text = `
 ╔═ Devlogs ═════════════╗
 ║ I’ve been making devlogs since the very start of this portfolio
 ║ and you can find them all on my Youtube channel.
-║ https://www.youtube.com/@BrunoSimon
+║ https://www.youtube.com/@MuhammedRasal
 ╚═══════════════════════╝
 
 ╔═ Source code ═════════╗
-║ The code is available on GitHub under MIT license. Even the Blender files are there, so have fun!
-║ https://github.com/brunosimon/folio-2025
+║ The code is available on GitHub under MIT license.
+║ https://github.com/muhammed-rasal/portfolio
 ║ For security reasons, I’m not sharing the server code, but the portfolio works without it.
 ╚═══════════════════════╝
 
@@ -69,7 +69,7 @@ const text = `
 ║ https://linktr.ee/Kounine
 ║ They are now under CC0 license, meaning you can do whatever you want with them!
 ║ Download them here.
-║ https://github.com/brunosimon/folio-2025/tree/main/static/sounds/musics
+║ https://github.com/muhammed-rasal/portfolio/tree/main/static/sounds/musics
 ╚═══════════════════════╝
 
 ╔═ Some more links ═════╗
