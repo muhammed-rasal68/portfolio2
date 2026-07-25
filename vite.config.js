@@ -1,6 +1,5 @@
 import restart from 'vite-plugin-restart'
 import wasm from 'vite-plugin-wasm'
-import topLevelAwait from 'vite-plugin-top-level-await'
 
 export default {
     root: 'sources/',
@@ -19,14 +18,12 @@ export default {
         sourcemap: false,
         rollupOptions:
         {
-            // Prevent rollup from externalizing buffer/process which are polyfilled
             plugins: []
         }
     },
     plugins:
     [
         wasm(),
-        topLevelAwait(),
         restart({ restart: [ '../static/**' ] }),
     ],
     resolve:

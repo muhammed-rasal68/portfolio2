@@ -16,20 +16,20 @@ const text = `
 ╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝      ╚═════╝ ╚══════╝╚═╝ ╚═════╝ 
 
 ╔═ Intro ═══════════════╗
-║ Thank you for visiting my portfolio, you sneaky developer!
-║ If you are curious about the stack and how I built this project, here’s everything you need to know.
+║ Web Developer | Specialist in HTML & CSS | Also building fullstack websites infused with AI.
+║ Passionate about clean design, learning new trends, and bringing ideas to life.
+║ Location: Kerala, India
 ╚═══════════════════════╝
 
 ╔═ Socials ═══════════════╗
-║ Mail           ⇒ muhammed.rasal@example.com
+║ Mail           ⇒ sanurasal00@gmail.com
 ║ X              ⇒ https://x.com/muhammed_rasal
 ║ BlueSKy        ⇒ https://bsky.app/profile/muhammed-rasal.bsky.social
 ║ Discord public ⇒ https://discord.com/channels/769928116701233152/1445064878384480288
 ║ Discord PM     ⇒ https://discord.com/users/202907325722263553
 ║ Youtube        ⇒ https://www.youtube.com/@MuhammedRasal
 ║ Twitch         ⇒ https://www.twitch.tv/muhammed_rasal
-║ GitHub         ⇒ https://github.com/muhammed-rasal
-║ LinkedIn       ⇒ https://www.linkedin.com/in/muhammed-rasal/
+║ GitHub         ⇒ https://github.com/muhammed-rasal68
 ╚═══════════════════════╝
 
 ╔═ Debug ═══════════════╗
@@ -60,7 +60,7 @@ const text = `
 
 ╔═ Source code ═════════╗
 ║ The code is available on GitHub under MIT license.
-║ https://github.com/muhammed-rasal/portfolio
+║ https://github.com/muhammed-rasal68/portfolio2
 ║ For security reasons, I’m not sharing the server code, but the portfolio works without it.
 ╚═══════════════════════╝
 
@@ -69,7 +69,7 @@ const text = `
 ║ https://linktr.ee/Kounine
 ║ They are now under CC0 license, meaning you can do whatever you want with them!
 ║ Download them here.
-║ https://github.com/muhammed-rasal/portfolio/tree/main/static/sounds/musics
+║ https://github.com/muhammed-rasal68/portfolio2/tree/main/static/sounds/musics
 ╚═══════════════════════╝
 
 ╔═ Some more links ═════╗
@@ -82,7 +82,7 @@ const text = `
 let finalText = ''
 let finalStyles = []
 const stylesSet = {
-    letter: 'color: #ffffff; font: 400 1em monospace;',
+    letter: 'color: #333333; font: 400 1em monospace;',
     pipe: 'color: #D66FFF; font: 400 1em monospace;',
 }
 let currentStyle = null
