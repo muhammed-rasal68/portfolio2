@@ -75,6 +75,21 @@ export default [
         ]
     },
     {
+        title: 'Rasal Todo',
+        titleSmall: [ 'Rasal', 'Todo' ],
+        url: 'https://rasal-todo.netlify.app/',
+        attributes:
+        {
+            role: [ 'Full-Stack Developer' ],
+            with: [ 'React' ]
+        },
+        distinctions: [],
+        images:
+        [
+            'rasal-todo-1.ktx',
+        ]
+    },
+    {
         title: 'SAB Designs',
         titleSmall: [ 'SAB', 'Designs' ],
         url: 'https://sabdesigns.in',
