@@ -20,12 +20,12 @@ export class Lighting
         this.colorUniform = uniform(color('#ffffff'))
         this.intensityUniform = uniform(1)
         this.count = 1
-        this.mapSize = this.game.quality.level === 0 ? 2048 : 512
+        this.mapSize = this.game.quality.level === 0 ? 2048 : (this.game.quality.level <= 2 ? 512 : 256)
         this.shadowAmplitude = this.game.view.optimalArea.radius
         this.depth = this.game.view.optimalArea.radius * 2
         this.shadowBias = -0.001
         this.shadowNormalBias = 0.1
-        this.shadowRadius = this.game.quality.level === 0 ? 3 : 2
+        this.shadowRadius = this.game.quality.level === 0 ? 3 : (this.game.quality.level <= 2 ? 2 : 1)
 
         if(this.game.debug.active)
         {

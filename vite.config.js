@@ -1,5 +1,6 @@
 import restart from 'vite-plugin-restart'
 import wasm from 'vite-plugin-wasm'
+import compression from 'vite-plugin-compression'
 
 export default {
     root: 'sources/',
@@ -18,13 +19,23 @@ export default {
         sourcemap: false,
         rollupOptions:
         {
-            plugins: []
+            output:
+            {
+                manualChunks:
+                {
+                    three: [ 'three' ],
+                    rapier: [ '@dimforge/rapier3d' ],
+                    vendor: [ 'gsap', 'howler', 'tweakpane' ],
+                }
+            }
         }
     },
     plugins:
     [
         wasm(),
         restart({ restart: [ '../static/**' ] }),
+        compression({ algorithm: 'gzip', ext: '.gz', deleteOriginalAssets: false }),
+        compression({ algorithm: 'brotliCompress', ext: '.br', deleteOriginalAssets: false }),
     ],
     resolve:
     {

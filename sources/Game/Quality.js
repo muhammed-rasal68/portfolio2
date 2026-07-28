@@ -71,9 +71,10 @@ export class Quality
         else if(this.screenResolution > 1228800) score += 2 // 900p
         else score += 2 // Below 900p (lighter load)
 
-        // Pixel ratio
+        // Pixel ratio - penalize high DPR on low-end devices
         this.pixelRatio = window.devicePixelRatio || 1
         if(this.pixelRatio > 2) score -= 1
+        if(this.pixelRatio > 2 && isLowEndGPU) score -= 1
 
         // WebGPU detection
         this.hasWebGPU = typeof navigator.gpu !== 'undefined'
@@ -83,7 +84,7 @@ export class Quality
         this.isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
         if(this.isMobile) score -= 2
 
-        // Touch screen (tablet indicator)
+        // Touch screen (tablet indicator) - mobile/tablet penalty adjusted
         this.isTouch = 'ontouchstart' in window && navigator.maxTouchPoints > 1
         if(this.isTouch && !this.isMobile) score -= 1
 
@@ -96,9 +97,9 @@ export class Quality
             if(conn.saveData) score -= 1
         }
 
-        // Map score to level (0=high, 3=low), biased toward higher quality
-        if(score >= 6) this.level = 0
-        else if(score >= 4) this.level = 1
+        // Map score to level (0=high, 3=low), biased toward lower quality for low-end
+        if(score >= 7) this.level = 0
+        else if(score >= 5) this.level = 1
         else if(score >= 2) this.level = 2
         else this.level = 3
     }
