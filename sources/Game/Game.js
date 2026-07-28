@@ -162,14 +162,6 @@ export class Game
                 [ 'interactivePointsKeyIconATexture',      `interactivePoints/interactivePointsKeyIconA.${compressedTextureExtension}`,     compressedTextureFormat, TextureConfigs.nearest ],
                 [ 'jukeboxMusicNotes',                     `jukebox/jukeboxMusicNotes.${compressedTextureExtension}`,                       compressedTextureFormat, TextureConfigs.linear ],
                 [ 'achievementsGlyphsTexture',             `achievements/glyphs.${compressedTextureExtension}`,                             compressedTextureFormat, (resource) => { TextureConfigs.linear(resource); resource.wrapS = THREE.RepeatWrapping; } ],
-                [ 'careerFreelancerTexture',               `career/careerFreelancer.${compressedTextureExtension}`,                         compressedTextureFormat, TextureConfigs.clampLinear ],
-                [ 'careerHeticTexture',                    `career/careerHetic.${compressedTextureExtension}`,                              compressedTextureFormat, TextureConfigs.clampLinear ],
-                [ 'careerImmersiveGardenTexture',          `career/careerImmersiveGarden.${compressedTextureExtension}`,                    compressedTextureFormat, TextureConfigs.clampLinear ],
-                [ 'careerIRLTeacherTexture',               `career/careerIRLTeacher.${compressedTextureExtension}`,                         compressedTextureFormat, TextureConfigs.clampLinear ],
-                [ 'careerOnlineTeacherTexture',            `career/careerOnlineTeacher.${compressedTextureExtension}`,                      compressedTextureFormat, TextureConfigs.clampLinear ],
-                [ 'careerUzikTexture',                     `career/careerUzik.${compressedTextureExtension}`,                               compressedTextureFormat, TextureConfigs.clampLinear ],
-                [ 'timeMachineScreenMGSTexture',           `timeMachine/timeMachineScreenMGS.${compressedTextureExtension}`,                compressedTextureFormat, TextureConfigs.clampSRGB ],
-                [ 'timeMachineScreenFolioTexture',         `timeMachine/timeMachineScreenFolio.${compressedTextureExtension}`,              compressedTextureFormat, TextureConfigs.clampSRGB ],
             ],
             (toLoad, total) =>
             {

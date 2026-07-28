@@ -33,16 +33,38 @@ export class SocialArea extends Area
 
     setLinks()
     {
-        const radius = 6
-        let i = 0
+        const nameToPrefix = {
+            'Mail': 'mail',
+            'X': 'x',
+            'BlueSky': 'bluesky',
+            'Discord': 'discord',
+            'YouTube': 'youtube',
+            'Twitch': 'twitch',
+            'GitHub': 'gitHub',
+        }
+
+        const socialPositions = {}
+        for(const object of this.objects.items)
+        {
+            if(object.visual)
+            {
+                const childName = object.visual.object3D.name
+                for(const [name, prefix] of Object.entries(nameToPrefix))
+                {
+                    if(childName.toLowerCase().startsWith(prefix.toLowerCase()))
+                    {
+                        const position = object.visual.object3D.position.clone()
+                        position.y = 1
+                        socialPositions[name] = position
+                        break
+                    }
+                }
+            }
+        }
 
         for(const link of socialData)
         {
-            const angle = i * Math.PI / (socialData.length - 1)
-            const position = this.center.clone()
-            position.x += Math.cos(angle) * radius
-            position.y = 1
-            position.z -= Math.sin(angle) * radius
+            const position = socialPositions[link.name] || this.center.clone()
 
             this.interactivePoint = this.game.interactivePoints.create(
                 position,
@@ -51,10 +73,25 @@ export class SocialArea extends Area
                 InteractivePoints.STATE_CONCEALED,
                 () =>
                 {
-                    if(link.url)
+                    if(link.name === 'GitHub')
+                    {
                         window.open(link.url, '_blank')
-                    else(link.modal)
-                        this.game.modals.open(link.modal)
+                    }
+                    else
+                    {
+                        this.game.notifications.show(
+                            /* html */`
+                                <div class="top">
+                                    <div class="title">${link.name}</div>
+                                </div>
+                                <div class="bottom">
+                                    <div class="description">Coming Soon</div>
+                                </div>
+                            `,
+                            '',
+                            3
+                        )
+                    }
                 },
                 () =>
                 {
@@ -69,8 +106,6 @@ export class SocialArea extends Area
                     this.game.inputs.interactiveButtons.removeItems(['interact'])
                 }
             )
-            
-            i++
         }
     }
 

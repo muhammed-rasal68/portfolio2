@@ -1,4 +1,3 @@
-import labData from './lab.js'
 import projectsData from './projects.js'
 
 export default
@@ -13,7 +12,7 @@ export default
         'areas',
         'Traveler',
         'Vist every area.',
-        13,
+        10,
         true // Unique
     ],
     [
@@ -21,13 +20,6 @@ export default
         'But can you fix the wifi?',
         'Check every project in the <strong>projects</strong> area.',
         projectsData.length,
-        true // Unique
-    ],
-    [
-        'lab',
-        'I\'m a bit of a scientist myself',
-        'Check every project in the <strong>lab</strong> area.',
-        labData.length,
         true // Unique
     ],
     [

@@ -488,11 +488,9 @@ export class Audio
             }
         }
 
-        // Campfire (Lab Area + Bonfire Area)
+        // Bonfire Area
         {
             const positions = []
-            if(this.game.world.areas?.lab)
-                positions.push(this.game.world.areas.lab.references.items.get('fire')[0].position)
 
             if(positions.length)
             {
