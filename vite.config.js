@@ -1,6 +1,5 @@
 import restart from 'vite-plugin-restart'
 import wasm from 'vite-plugin-wasm'
-import compression from 'vite-plugin-compression'
 
 export default {
     root: 'sources/',
@@ -34,8 +33,6 @@ export default {
     [
         wasm(),
         restart({ restart: [ '../static/**' ] }),
-        compression({ algorithm: 'gzip', ext: '.gz', deleteOriginalAssets: false }),
-        compression({ algorithm: 'brotliCompress', ext: '.br', deleteOriginalAssets: false }),
     ],
     resolve:
     {
