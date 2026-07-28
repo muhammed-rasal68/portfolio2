@@ -285,7 +285,8 @@ export class LandingArea extends Area
                     })
 
                     // Sound
-                    this.game.audio.groups.get('campfire').items[0].positions.push(position)
+                    if(this.game.audio.groups.get('campfire'))
+                        this.game.audio.groups.get('campfire').items[0].positions.push(position)
                 })
             },
             () =>

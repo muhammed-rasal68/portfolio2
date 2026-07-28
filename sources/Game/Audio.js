@@ -488,22 +488,17 @@ export class Audio
             }
         }
 
-        // Bonfire Area
+        // Bonfire Area (LandingArea pushes its bonfire position later)
         {
-            const positions = []
-
-            if(positions.length)
-            {
-                this.game.audio.register({
-                    group: 'campfire',
-                    path: 'sounds/fire/Fire Burning.mp3',
-                    autoplay: true,
-                    loop: true,
-                    volume: 1,
-                    positions: positions,
-                    distanceFade: 13,
-                })
-            }
+            this.game.audio.register({
+                group: 'campfire',
+                path: 'sounds/fire/Fire Burning.mp3',
+                autoplay: true,
+                loop: true,
+                volume: 1,
+                positions: [],
+                distanceFade: 13,
+            })
         }
     }
 
