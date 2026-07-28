@@ -18,15 +18,7 @@ export default {
         sourcemap: false,
         rollupOptions:
         {
-            output:
-            {
-                manualChunks:
-                {
-                    three: [ 'three' ],
-                    rapier: [ '@dimforge/rapier3d' ],
-                    vendor: [ 'gsap', 'howler', 'tweakpane' ],
-                }
-            }
+            plugins: []
         }
     },
     plugins:
