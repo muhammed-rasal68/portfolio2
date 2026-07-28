@@ -13,7 +13,7 @@ export class Whispers
     {
         this.game = Game.getInstance()
 
-        this.count = parseInt(import.meta.env.VITE_WHISPERS_COUNT)
+        this.count = parseInt(import.meta.env.VITE_WHISPERS_COUNT) || 30
 
         this.setSounds()
         this.setFlames()

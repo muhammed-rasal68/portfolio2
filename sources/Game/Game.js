@@ -94,7 +94,7 @@ export class Game
         this.rendering = new Rendering()
         await this.rendering.setRenderer()
 
-        const compressed = !!import.meta.env.VITE_COMPRESSED
+        const compressed = true
         const compressedModelSuffix = compressed ? '-compressed' : ''
         const compressedTextureFormat = compressed ? 'textureKtx' : 'texture'
         const compressedTextureExtension = compressed ? 'ktx' : 'png'
