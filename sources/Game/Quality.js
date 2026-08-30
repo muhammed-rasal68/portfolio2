@@ -12,7 +12,7 @@ export class Quality
         this.detectSpecs()
         this.fpsAdjusted = false
 
-        setTimeout(() => this.startFPSMonitor(), 10000)
+        setTimeout(() => this.startFPSMonitor(), 5000)
 
         this.debug()
     }
@@ -23,16 +23,16 @@ export class Quality
 
         // RAM
         this.deviceMemory = navigator.deviceMemory || 4
-        if(this.deviceMemory >= 16) score += 4
-        else if(this.deviceMemory >= 8) score += 3
-        else if(this.deviceMemory >= 4) score += 2
-        else if(this.deviceMemory >= 2) score += 1
+        if(this.deviceMemory >= 16) score += 3
+        else if(this.deviceMemory >= 8) score += 2
+        else if(this.deviceMemory >= 4) score += 1
+        else score -= 1
 
         // CPU cores
         this.hardwareConcurrency = navigator.hardwareConcurrency || 4
-        if(this.hardwareConcurrency >= 16) score += 3
-        else if(this.hardwareConcurrency >= 8) score += 2
-        else if(this.hardwareConcurrency >= 4) score += 1
+        if(this.hardwareConcurrency >= 16) score += 2
+        else if(this.hardwareConcurrency >= 8) score += 1
+        else if(this.hardwareConcurrency < 4) score -= 1
 
         // GPU via WebGL
         this.gpuVendor = ''
@@ -57,24 +57,24 @@ export class Quality
         }
 
         const gpuStr = (this.gpuVendor + ' ' + this.gpuRenderer).toLowerCase()
-        const isLowEndGPU = /intel (hd|uhd|gma)|mali|powervr|adreno (3|4|5)\d|lumos|vivante|tegra (3|4)/.test(gpuStr)
+        const isLowEndGPU = /intel (hd|uhd|gma)|mali|powervr|adreno (3|4|5)\d|lumos|vivante|tegra (3|4)|swiftshader|llvmpipe/.test(gpuStr)
         const isIntegratedIntel = /intel/.test(gpuStr) && /(hd|uhd|iris)$/.test(gpuStr)
 
-        if(isLowEndGPU) score -= 3
-        else if(isIntegratedIntel && this.deviceMemory < 8) score -= 1
+        if(isLowEndGPU) score -= 4
+        else if(isIntegratedIntel && this.deviceMemory < 8) score -= 2
 
         // Screen resolution
         this.screenResolution = window.screen.width * window.screen.height
-        if(this.screenResolution >= 8294400) score -= 2 // 4K+ needs more GPU
-        else if(this.screenResolution > 3686400) score += 0 // 1440p-4K, neutral
-        else if(this.screenResolution > 2073600) score += 1 // 1080p-1440p, bonus
-        else if(this.screenResolution > 1228800) score += 2 // 900p
-        else score += 2 // Below 900p (lighter load)
+        if(this.screenResolution >= 8294400) score -= 3
+        else if(this.screenResolution > 3686400) score -= 1
+        else if(this.screenResolution > 2073600) score += 0
+        else if(this.screenResolution > 1228800) score += 1
+        else score += 2
 
-        // Pixel ratio - penalize high DPR on low-end devices
+        // Pixel ratio
         this.pixelRatio = window.devicePixelRatio || 1
-        if(this.pixelRatio > 2) score -= 1
-        if(this.pixelRatio > 2 && isLowEndGPU) score -= 1
+        if(this.pixelRatio > 2) score -= 2
+        else if(this.pixelRatio > 1.5) score -= 1
 
         // WebGPU detection
         this.hasWebGPU = typeof navigator.gpu !== 'undefined'
@@ -82,9 +82,9 @@ export class Quality
 
         // Mobile detection
         this.isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-        if(this.isMobile) score -= 2
+        if(this.isMobile) score -= 3
 
-        // Touch screen (tablet indicator) - mobile/tablet penalty adjusted
+        // Touch screen (tablet indicator)
         this.isTouch = 'ontouchstart' in window && navigator.maxTouchPoints > 1
         if(this.isTouch && !this.isMobile) score -= 1
 
@@ -95,12 +95,13 @@ export class Quality
             const conn = navigator.connection
             this.connectionType = conn.effectiveType || 'unknown'
             if(conn.saveData) score -= 1
+            if(conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g') score -= 1
         }
 
-        // Map score to level (0=high, 3=low), biased toward lower quality for low-end
-        if(score >= 7) this.level = 0
-        else if(score >= 5) this.level = 1
-        else if(score >= 2) this.level = 2
+        // Map score to level (0=high, 3=low), biased toward lower quality
+        if(score >= 6) this.level = 0
+        else if(score >= 3) this.level = 1
+        else if(score >= 0) this.level = 2
         else this.level = 3
     }
 
@@ -119,17 +120,19 @@ export class Quality
                 return
 
             this.fpsFrames.push(performance.now())
-            if(this.fpsFrames.length > 60)
+            if(this.fpsFrames.length > 30)
                 this.fpsFrames.shift()
 
-            if(this.fpsFrames.length === 60)
+            if(this.fpsFrames.length === 30)
             {
-                const elapsed = this.fpsFrames[59] - this.fpsFrames[0]
-                const avgFPS = 60000 / elapsed
+                const elapsed = this.fpsFrames[29] - this.fpsFrames[0]
+                const avgFPS = 30000 / elapsed
 
-                if(avgFPS < 20 && this.level < 3)
-                    this.changeLevel(this.level + (avgFPS < 15 ? 2 : 1))
-                else if(avgFPS < 30 && this.level < 2)
+                if(avgFPS < 15 && this.level < 3)
+                    this.changeLevel(3)
+                else if(avgFPS < 24 && this.level < 2)
+                    this.changeLevel(this.level + 1)
+                else if(avgFPS < 30 && this.level < 1)
                     this.changeLevel(this.level + 1)
 
                 this.fpsAdjusted = true

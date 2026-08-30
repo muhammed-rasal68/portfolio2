@@ -468,7 +468,7 @@ export class View
         this.speedLines.clipSpaceTarget = uniform(new THREE.Vector3())
         this.speedLines.speed = uniform(12)
 
-        const linesCount = 30
+        const linesCount = this.game.quality.level <= 1 ? 30 : 15
         const positionArray = new Float32Array(linesCount * 3 * 3)
         const timeRandomnessArray = new Float32Array(linesCount * 3)
         const distanceArray = new Float32Array(linesCount * 3)

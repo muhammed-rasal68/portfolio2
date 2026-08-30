@@ -479,15 +479,12 @@ export class BowlingArea extends Area
         // Interactive point
         this.game.interactivePoints.create(
             this.references.items.get('jukeboxInteractivePoint')[0].position,
-            'Change song',
+            'Toggle sound',
             InteractivePoints.ALIGN_LEFT,
             InteractivePoints.STATE_CONCEALED,
             () =>
             {
-                if(this.game.audio.mute.active)
-                    this.game.audio.mute.deactivate()
-
-                this.game.audio.playlist.next()
+                this.game.audio.mute.toggle()
             },
             () =>
             {

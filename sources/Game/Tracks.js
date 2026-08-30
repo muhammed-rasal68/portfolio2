@@ -8,7 +8,7 @@ export class Tracks
     {
         this.game = Game.getInstance()
 
-        this.resolution = 512
+        this.resolution = this.game.quality.level <= 1 ? 512 : 256
         this.size = 40
         this.halfSize = this.size / 2
         this.tracks = []

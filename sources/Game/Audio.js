@@ -1,7 +1,7 @@
 import * as THREE from 'three/webgpu'
 import { Howl, Howler } from 'howler'
 import { Game } from './Game.js'
-import { remap, remapClamp, clamp } from './utilities/maths.js'
+import { remapClamp, clamp } from './utilities/maths.js'
 import gsap from 'gsap'
 import { Events } from './Events.js'
 
@@ -27,12 +27,11 @@ export class Audio
     {
         this.initiated = true
 
-        this.setPlaylist()
         this.setAmbiants()
         this.setOneOffs()
 
         // Play all autoplays that didn't start because not initated
-        this.groups.forEach((group, name) =>
+        this.groups.forEach((group) =>
         {
             for(const item of group.items)
             {
@@ -142,116 +141,6 @@ export class Audio
         group.items.push(item)
 
         return item
-    }
-
-    setPlaylist()
-    {
-        this.playlist = {}
-        this.playlist.songs = [
-            {
-                path: 'sounds/musics/Sudo.mp3',
-                name: 'Sudo.mp3'
-            },
-            {
-                path: 'sounds/musics/Boy.mp3',
-                name: 'Boy.mp3'
-            },
-            {
-                path: 'sounds/musics/Baguira.mp3',
-                name: 'Baguira.mp3'
-            },
-        ]
-        this.playlist.index = (Math.floor(Date.now() / 1000 / 60 / 3) % this.playlist.songs.length) // Different music every X minutes
-        // this.playlist.index = -1 // Different music every X minutes
-        this.playlist.current = null
-        this.playlist.switching = false
-
-        for(const song of this.playlist.songs)
-        {
-            song.loaded = false
-            song.sound = new Howl({
-                src: [ song.path ],
-                pool: 0,
-                autoplay: false,
-                loop: false,
-                preload: false,
-                volume: 0.2,
-                onend: () =>
-                {
-                    this.playlist.next()
-                }
-            })
-        }
-
-        this.playlist.next = () =>
-        {
-            if(this.playlist.switching)
-                return
-
-            this.playlist.switching = true
-
-            // Disc change sound
-            this.game.audio.groups.get('discChange').play()
-
-            // Old one
-            if(this.playlist.current)
-            {
-                this.playlist.current.sound.stop()
-            }
-            
-            gsap.delayedCall(3, () =>
-            {
-                this.playlist.index++
-
-                if(this.playlist.index >= this.playlist.songs.length)
-                    this.playlist.index = 0
-
-                // New one
-                this.playlist.current = this.playlist.songs[this.playlist.index]
-
-                if(!this.playlist.current.loaded)
-                {
-                    this.playlist.current.sound.load()
-                }
-
-                this.playlist.current.sound.play()
-
-                // Notification
-                const html = /* html */`
-                    <div class="top">
-                        <div class="title">Now playing<br /><span class="song-name">${this.playlist.current.name}</span></div>
-                        <div class="music-note-icon"></div>
-                    </div>
-                `
-
-                this.game.notifications.show(
-                    html,
-                    'song',
-                    5,
-                    // () => {
-                    // }
-                )
-                
-                this.playlist.switching = false
-            })
-        }
-
-        this.playlist.play = () =>
-        {
-            this.playlist.current = this.playlist.songs[this.playlist.index]
-
-            if(!this.playlist.current.loaded)
-            {
-                this.playlist.current.sound.load()
-            }
-
-            this.playlist.current.sound.play()
-        }
-
-        if(import.meta.env.VITE_MUSIC)
-        {
-            this.playlist.play()
-        }
     }
 
     setAmbiants()
@@ -404,23 +293,6 @@ export class Audio
             })
         }
 
-        // Jingle bells
-        this.register({
-            group: 'jingleBells',
-            path: 'sounds/jingleBells/Mountain Audio - Christmas Bells.mp3',
-            autoplay: true,
-            loop: true,
-            volume: 0,
-            onPlaying: (item) =>
-            {
-                const sine = Math.sin(this.game.ticker.elapsedScaled * 0.1) * 0.5 + 0.5
-                const targetVolume = Math.max(0, this.game.weather.snow.value) * 0.35 * sine
-
-                const easing = targetVolume > item.volume ? 0.005 : 0.05
-                item.volume += (targetVolume - item.volume) * this.game.ticker.deltaScaled * easing
-            }
-        })
-
         // Rain
         this.register({
             group: 'rain',
@@ -504,14 +376,6 @@ export class Audio
 
     setOneOffs()
     {
-        this.register({
-            group: 'discChange',
-            path: 'sounds/jukebox/DVDPlayerChangeDisc_BW.49824.mp3',
-            autoplay: false,
-            loop: false,
-            volume: 0.3,
-        })
-        
         this.register({
             group: 'slide',
             path: 'sounds/mecanism/slide.mp3',
@@ -685,20 +549,12 @@ export class Audio
         window.addEventListener('blur', () =>
         {
             Howler.mute(true)
-
-            if(this.playlist?.current)
-                this.playlist.current.sound.pause()
         })
 
         window.addEventListener('focus', () =>
         {
             if(!this.mute.active)
-            {
                 Howler.mute(false)
-
-                if(this.playlist?.current)
-                    this.playlist.current.sound.play()
-            }
         })
 
     }
@@ -734,18 +590,21 @@ export class Audio
                         }
                     }
 
-                    const cameraRelativePosition = closestPosition.clone()
-                    cameraRelativePosition.applyMatrix4(this.game.view.camera.matrixWorldInverse)
-                    cameraRelativePosition.normalize()
-                    cameraRelativePosition.z *= 0.1
-
-                    if(item.distanceFade)
+                    if(closestPosition)
                     {
-                        distanceFadeMultiplier = remapClamp(closestDistance, 0, item.distanceFade, 1, 0)
-                    }
+                        const cameraRelativePosition = closestPosition.clone()
+                        cameraRelativePosition.applyMatrix4(this.game.view.camera.matrixWorldInverse)
+                        cameraRelativePosition.normalize()
+                        cameraRelativePosition.z *= 0.1
 
-                    if(distanceFadeMultiplier > 0)
-                        item.howl.pos(cameraRelativePosition.x, cameraRelativePosition.y, cameraRelativePosition.z)
+                        if(item.distanceFade)
+                        {
+                            distanceFadeMultiplier = remapClamp(closestDistance, 0, item.distanceFade, 1, 0)
+                        }
+
+                        if(distanceFadeMultiplier > 0)
+                            item.howl.pos(cameraRelativePosition.x, cameraRelativePosition.y, cameraRelativePosition.z)
+                    }
                 }
 
                 // Rate (apply global too)

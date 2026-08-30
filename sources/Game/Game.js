@@ -69,6 +69,8 @@ export class Game
 
     async init()
     {
+        try
+        {
         // Setup
         this.domElement = document.querySelector('.game')
         this.canvasElement = this.domElement.querySelector('.js-canvas')
@@ -201,6 +203,11 @@ export class Game
         if(this.debug.active)
         {
             this.achievements.setProgress('debug', 1)
+        }
+
+        console.log('[Game] Init complete')
+        } catch(e) {
+            console.error('[Game] Init failed:', e)
         }
     }
 

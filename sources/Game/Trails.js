@@ -35,7 +35,7 @@ export class Trails
             })
         }
         
-        this.subdivisions = 32
+        this.subdivisions = this.game.quality.level <= 1 ? 32 : 16
         this.texel = 1 / this.subdivisions
         this.distanceThrottle = 0.4
         this.emissiveMultiplier = uniform(5)

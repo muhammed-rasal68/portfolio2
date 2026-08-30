@@ -8,7 +8,19 @@ if(import.meta.env.VITE_LOG)
         ...consoleLog
     )
 
-if(import.meta.env.VITE_GAME_PUBLIC)
-    window.game = new Game()
-else
-    new Game()
+window.addEventListener('error', (e) => {
+    console.error('[FATAL ERROR]', e.message, e.filename, e.lineno, e.error)
+})
+
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('[UNHANDLED REJECTION]', e.reason)
+})
+
+try {
+    if(import.meta.env.VITE_GAME_PUBLIC)
+        window.game = new Game()
+    else
+        new Game()
+} catch(e) {
+    console.error('[GAME INIT ERROR]', e)
+}
