@@ -6,6 +6,7 @@ import Keyboard from './Keyboard.js'
 import { InteractiveButtons } from './InteractiveButtons.js'
 import { Wheel } from './Wheel.js'
 import { Nipple } from './Nipple.js'
+import { MobileArrows } from './MobileArrows.js'
 import ObservableSet from '../utilities/ObservableSet.js'
 
 export class Inputs
@@ -46,6 +47,7 @@ export class Inputs
         this.setWheel()
         this.setInteractiveButtons()
         this.setNipple()
+        this.setMobileArrows()
 
         this.addActions(actions)
         
@@ -164,6 +166,11 @@ export class Inputs
                 
             this.nipple.updateFromPointer(this.pointer, action)
         })
+    }
+
+    setMobileArrows()
+    {
+        this.mobileArrows = new MobileArrows()
     }
 
     addActions(actions)

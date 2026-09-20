@@ -26,6 +26,7 @@ export class InteractivePoints
         }
 
         this.items = []
+        this.groups = []
         this.activeItem = null
         this.revealed = false
         this.temporaryHidden = true
@@ -196,11 +197,10 @@ export class InteractivePoints
          */
         const group = new THREE.Group()
         group.rotation.reorder('YXZ')
-        group.rotation.x = - Math.PI * 0.15
-        group.rotation.y = Math.PI * 0.25
         group.position.copy(newPosition)
         group.scale.setScalar(0.85)
         this.game.scene.add(group)
+        this.groups.push(group)
 
         // Materials
         const materials = []
@@ -575,6 +575,13 @@ export class InteractivePoints
 
     update()
     {
+        // Billboard: make groups face the camera
+        const camera = this.game.view.defaultCamera
+        for(const group of this.groups)
+        {
+            group.lookAt(camera.position)
+        }
+
         // Player testing (not cursor intersect)
         const distanceTraveled = Math.hypot(
             this.playerPosition.value.x - this.game.player.position2.x,

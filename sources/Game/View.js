@@ -621,30 +621,25 @@ export class View
 
         this.game.inputs.events.on('viewMapPointer', (action) =>
         {
-            if(this.mode === View.MODE_FIXED)
+            if(action.active)
             {
-                // Focus point
-                if(action.active)
+                // Two-finger touch or mouse drag => orbit camera (like IJKL)
+                if(this.game.inputs.pointer.mode === Pointer.MODE_MOUSE || this.game.inputs.pointer.touches.length >= 2)
                 {
-                    // Map
-                    if(this.game.inputs.pointer.mode === Pointer.MODE_MOUSE || this.game.inputs.pointer.touches.length >= 2)
-                    {
+                    if(this.mode === View.MODE_FIXED)
                         this.focusPoint.isTracking = false
-                        
-                        const mapMovement = new THREE.Vector2(this.game.inputs.pointer.delta.x, this.game.inputs.pointer.delta.y)                    
-                        mapMovement.rotateAround(new THREE.Vector2(), -this.spherical.theta)
 
-                        const smallestSide = Math.min(this.game.viewport.width, this.game.viewport.height)
-                        mapMovement.multiplyScalar(10 / smallestSide)
-                        
-                        this.focusPoint.position.x -= mapMovement.x * 2
-                        this.focusPoint.position.z -= mapMovement.y * 2
-                    }
+                    const mapMovement = new THREE.Vector2(this.game.inputs.pointer.delta.x, this.game.inputs.pointer.delta.y)
+                    const smallestSide = Math.min(this.game.viewport.width, this.game.viewport.height)
 
-                    // Pinch
-                    this.zoom.baseRatio += this.game.inputs.pointer.pinch.distanceDelta * 0.005
-                    this.zoom.baseRatio = clamp(this.zoom.baseRatio, 0, 1)
+                    // Apply orbit directly like keyboard IJKL
+                    this.userOrbit.theta += (mapMovement.x / smallestSide) * this.userOrbit.sensitivity * 2
+                    this.userOrbit.phi += (mapMovement.y / smallestSide) * this.userOrbit.sensitivity * 2
                 }
+
+                // Pinch
+                this.zoom.baseRatio += this.game.inputs.pointer.pinch.distanceDelta * 0.005
+                this.zoom.baseRatio = clamp(this.zoom.baseRatio, 0, 1)
             }
         })
     }

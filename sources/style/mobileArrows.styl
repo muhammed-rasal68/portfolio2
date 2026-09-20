@@ -1,0 +1,61 @@
+.mobile-arrows
+    display none
+    position fixed
+    bottom 22vh
+    left 50%
+    transform translateX(-50%)
+    pointer-events none
+    -webkit-user-select none
+    -moz-user-select none
+    user-select none
+    z-index 10
+
+    &.is-active
+        display block
+
+    .arrow
+        position absolute
+        width 56px
+        height 56px
+        border-radius 50%
+        background rgba(255, 255, 255, 0.12)
+        border 2px solid rgba(255, 255, 255, 0.3)
+        display flex
+        align-items center
+        justify-content center
+        pointer-events auto
+        backdrop-filter blur(4px)
+        -webkit-backdrop-filter blur(4px)
+        transition background 0.15s, transform 0.1s
+
+        &:active
+            background rgba(255, 255, 255, 0.3)
+            transform scale(0.9)
+
+        svg
+            width 28px
+            height 28px
+
+    .arrow-up
+        top -68px
+        left 50%
+        transform translateX(-50%)
+
+        &:active
+            transform translateX(-50%) scale(0.9)
+
+    .arrow-down
+        top 0
+        left 50%
+        transform translateX(-50%)
+
+        &:active
+            transform translateX(-50%) scale(0.9)
+
+    .arrow-left
+        top -34px
+        left -62px
+
+    .arrow-right
+        top -34px
+        right -62px
