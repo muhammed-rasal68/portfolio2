@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu'
-import CameraControls from 'camera-controls'
 import { Game } from './Game.js'
+import { Events } from './Events.js'
 import { clamp, lerp, remap, smoothstep } from './utilities/maths.js'
 import { mix, uniform, vec4, Fn, positionGeometry, attribute } from 'three/tsl'
 import gsap from 'gsap'
@@ -10,20 +10,22 @@ import { alea } from 'seedrandom'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
 import { Line2 } from 'three/examples/jsm/lines/webgpu/Line2.js'
 
-CameraControls.install( { THREE: THREE } )
-
 const rng = new alea('speedLines')
 
 export class View
 {
-    static MODE_DEFAULT = 1
-    static MODE_FREE = 2
+    static MODE_FIXED = 1
+    static MODE_FORWARD = 2
+    static MODE_DIRECTIVE = 3
+    static MODE_DRIVER = 4
 
     constructor(idealRatio = 1920 / 1080)
     {
         this.game = Game.getInstance()
+        this.events = new Events()
         
-        this.mode = View.MODE_DEFAULT
+        this.mode = View.MODE_FIXED
+        this.directiveLastForward = true
         this.position = new THREE.Vector3()
         this.delta = new THREE.Vector3()
         this.idealRatio = idealRatio
@@ -42,8 +44,10 @@ export class View
                 {
                     options:
                     {
-                        default: View.MODE_DEFAULT,
-                        free: View.MODE_FREE,
+                        fixed: View.MODE_FIXED,
+                        forward: View.MODE_FORWARD,
+                        directive: View.MODE_DIRECTIVE,
+                        driver: View.MODE_DRIVER,
                     }
                 }
             ).on('change', () => 
@@ -58,7 +62,6 @@ export class View
         this.setRoll()
         this.setCameras()
         this.setOptimalArea()
-        this.setFree()
         this.setCinematic()
         this.setSpeedLines()
         this.setMapControls()
@@ -81,25 +84,35 @@ export class View
         }, 1)
 
         // Toggle
-        if(this.game.debug.active)
-        {
-            this.game.inputs.addActions([
-                { name: 'viewToggle', categories: [], keys: [ 'Keyboard.KeyV' ] }
-            ])
+        this.game.inputs.addActions([
+            { name: 'viewToggle', categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.KeyV', 'Gamepad.home' ] }
+        ])
 
-            this.game.inputs.events.on('viewToggle', (action) =>
+        this.game.inputs.events.on('viewToggle', (action) =>
+        {
+            if(action.active)
             {
-                if(action.active)
-                {
-                    this.toggleMode()
-                }
-            })
-        }
+                this.toggleMode()
+            }
+        })
+
+        this.game.inputs.pointer.events.on('threeFingerTap', () =>
+        {
+            this.toggleMode()
+        })
+
+        this.game.inputs.gamepad.events.on('selectStartCombo', () =>
+        {
+            this.toggleMode()
+        })
     }
 
     toggleMode()
     {
-        this.setMode(this.mode === View.MODE_FREE ? View.MODE_DEFAULT : View.MODE_FREE)
+        const modes = [View.MODE_FIXED, View.MODE_FORWARD, View.MODE_DIRECTIVE, View.MODE_DRIVER]
+        const currentIndex = modes.indexOf(this.mode)
+        const nextIndex = (currentIndex + 1) % modes.length
+        this.setMode(modes[nextIndex])
     }
 
     setMode(mode)
@@ -108,9 +121,7 @@ export class View
 
         this.focusPoint.smoothedPosition.copy(this.focusPoint.position)
 
-        this.freeMode.enabled = this.mode === View.MODE_FREE
-        this.freeMode.setTarget(this.focusPoint.position.x, this.focusPoint.position.y, this.focusPoint.position.z)
-        this.freeMode.setPosition(this.camera.position.x, this.camera.position.y, this.camera.position.z)
+        this.events.trigger('modeChange', [ this.mode ])
     }
 
     setFocusPoint()
@@ -332,8 +343,10 @@ export class View
     setSpherical()
     {
         this.spherical = {}
-        this.spherical.phi = Math.PI * (this.game.quality.level === 0 ? 0.31 : 0.27)
-        this.spherical.theta = Math.PI * 0.25
+        this.spherical.basePhi = Math.PI * (this.game.quality.level === 0 ? 0.31 : 0.27)
+        this.spherical.baseTheta = Math.PI * 0.25
+        this.spherical.phi = this.spherical.basePhi
+        this.spherical.theta = this.spherical.baseTheta
 
         this.spherical.radius = {}
         this.spherical.radius.edges = { min: 15, max: 30 }
@@ -342,6 +355,38 @@ export class View
 
         this.spherical.offset = new THREE.Vector3()
         this.spherical.offset.setFromSphericalCoords(this.spherical.radius.current, this.spherical.phi, this.spherical.theta)
+
+        this.userOrbit = {}
+        this.userOrbit.phi = 0
+        this.userOrbit.theta = 0
+        this.userOrbit.sensitivity = 1.2
+        this.userOrbit.gamepadSensitivity = 3
+        this.userOrbit.enabled = true
+        this.userOrbit.gamepadEnabled = true
+        this.userOrbit.phiVelocity = 0
+        this.userOrbit.thetaVelocity = 0
+        this.userOrbit.acceleration = 4
+        this.userOrbit.damping = 5
+        this.userOrbit.maxSpeed = 2.5
+
+        this.game.inputs.addActions([
+            { name: 'orbitUp',      categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.KeyI' ] },
+            { name: 'orbitDown',    categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.KeyK' ] },
+            { name: 'orbitLeft',    categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.KeyJ' ] },
+            { name: 'orbitRight',   categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.KeyL' ] },
+            { name: 'orbitReset',   categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.KeyU' ] },
+        ])
+
+        this.game.inputs.events.on('orbitReset', (action) =>
+        {
+            if(action.active)
+            {
+                this.userOrbit.phi = 0
+                this.userOrbit.theta = 0
+                this.userOrbit.phiVelocity = 0
+                this.userOrbit.thetaVelocity = 0
+            }
+        })
 
         if(this.game.debug.active)
         {
@@ -395,9 +440,8 @@ export class View
         this.camera.position.setFromSphericalCoords(this.spherical.radius.current, this.spherical.phi, this.spherical.theta)
 
         this.defaultCamera = this.camera.clone()
-        this.freeCamera = this.camera.clone()
 
-        this.game.scene.add(this.camera, this.defaultCamera, this.freeCamera)
+        this.game.scene.add(this.camera, this.defaultCamera)
 
         this.cameraHelper = new THREE.CameraHelper(this.defaultCamera)
         this.cameraHelper.visible = false
@@ -408,15 +452,6 @@ export class View
         {
             this.debugPanel.addBinding(this.cameraHelper, 'visible', { label: 'cameraHelper' })
         }
-    }
-
-    setFree()
-    {
-        this.freeMode = new CameraControls(this.freeCamera, this.game.domElement)
-        this.freeMode.enabled = this.mode === View.MODE_FREE
-        this.freeMode.smoothTime = 0.075
-        this.freeMode.draggingSmoothTime = 0.075
-        this.freeMode.dollySpeed = 0.2
     }
 
     setCinematic()
@@ -571,9 +606,6 @@ export class View
 
         this.defaultCamera.aspect = this.game.viewport.width / this.game.viewport.height
         this.defaultCamera.updateProjectionMatrix()
-
-        this.freeCamera.aspect = this.game.viewport.width / this.game.viewport.height
-        this.freeCamera.updateProjectionMatrix()
     }
 
     throttleResize()
@@ -589,7 +621,7 @@ export class View
 
         this.game.inputs.events.on('viewMapPointer', (action) =>
         {
-            if(this.mode === View.MODE_DEFAULT)
+            if(this.mode === View.MODE_FIXED)
             {
                 // Focus point
                 if(action.active)
@@ -619,8 +651,14 @@ export class View
 
     update()
     {
-        // Gamepad Joystick map controls
-        if(this.mode === View.MODE_DEFAULT && this.game.inputs.gamepad.joysticks.right.active && !this.cinematic.active)
+        // Gamepad Joystick camera orbit
+        if(this.mode === View.MODE_FIXED && this.game.inputs.gamepad.joysticks.right.active && !this.cinematic.active && this.userOrbit.gamepadEnabled)
+        {
+            const rightStick = this.game.inputs.gamepad.joysticks.right
+            this.userOrbit.theta += rightStick.x * this.game.ticker.delta * this.userOrbit.gamepadSensitivity
+            this.userOrbit.phi -= rightStick.y * this.game.ticker.delta * this.userOrbit.gamepadSensitivity
+        }
+        else if(this.mode === View.MODE_FIXED && this.game.inputs.gamepad.joysticks.right.active && !this.cinematic.active)
         {
             this.focusPoint.isTracking = false
 
@@ -684,7 +722,7 @@ export class View
             this.focusPoint.helper.position.copy(newSmoothFocusPoint)
         
         // Default mode
-        if(this.mode === View.MODE_DEFAULT)
+        if(this.mode === View.MODE_FIXED)
         {
             // Zoom
             if(this.zoom.toggle !== 0)
@@ -701,6 +739,42 @@ export class View
 
             this.zoom.smoothedRatio = lerp(this.zoom.smoothedRatio, this.zoom.ratio, this.game.ticker.delta * 10)
         }
+
+        // Keyboard orbit - smooth velocity-based
+        if(this.mode === View.MODE_FIXED && this.userOrbit.enabled && !this.cinematic.active)
+        {
+            let phiInput = 0
+            let thetaInput = 0
+
+            if(this.game.inputs.actions.get('orbitUp')?.active)
+                phiInput -= 1
+            if(this.game.inputs.actions.get('orbitDown')?.active)
+                phiInput += 1
+            if(this.game.inputs.actions.get('orbitLeft')?.active)
+                thetaInput -= 1
+            if(this.game.inputs.actions.get('orbitRight')?.active)
+                thetaInput += 1
+
+            const dt = this.game.ticker.delta
+
+            this.userOrbit.phiVelocity += phiInput * this.userOrbit.acceleration * dt
+            this.userOrbit.thetaVelocity += thetaInput * this.userOrbit.acceleration * dt
+
+            const dampFactor = Math.exp(-this.userOrbit.damping * dt)
+            this.userOrbit.phiVelocity *= dampFactor
+            this.userOrbit.thetaVelocity *= dampFactor
+
+            this.userOrbit.phiVelocity = clamp(this.userOrbit.phiVelocity, -this.userOrbit.maxSpeed, this.userOrbit.maxSpeed)
+            this.userOrbit.thetaVelocity = clamp(this.userOrbit.thetaVelocity, -this.userOrbit.maxSpeed, this.userOrbit.maxSpeed)
+
+            this.userOrbit.phi += this.userOrbit.phiVelocity * dt * this.userOrbit.sensitivity
+            this.userOrbit.theta += this.userOrbit.thetaVelocity * dt * this.userOrbit.sensitivity
+        }
+
+        // Apply user orbit
+        this.userOrbit.phi = clamp(this.userOrbit.phi, -Math.PI * 0.45, Math.PI * 0.45)
+        this.spherical.phi = this.spherical.basePhi + this.userOrbit.phi
+        this.spherical.theta = this.spherical.baseTheta + this.userOrbit.theta
 
         // Radius
         const radiusMax = this.spherical.radius.edges.max + this.ratioOverflow * this.spherical.radius.nonIdealRatioOffset
@@ -734,22 +808,66 @@ export class View
         }
 
         // Apply to final camera
-        if(this.mode === View.MODE_DEFAULT)
+        if(this.mode === View.MODE_FIXED)
         {
             this.camera.position.copy(this.defaultCamera.position)
             this.camera.quaternion.copy(this.defaultCamera.quaternion)
         }
-        else if(this.mode === View.MODE_FREE)
+        else if(this.mode === View.MODE_FORWARD)
         {
-            this.freeMode.update(this.game.ticker.delta)
-            this.camera.position.copy(this.freeCamera.position)
-            this.camera.quaternion.copy(this.freeCamera.quaternion)
+            const vehiclePos = this.game.physicalVehicle.position
+            const forward = this.game.physicalVehicle.forward
+
+            const behindOffset = forward.clone().multiplyScalar(-6)
+            behindOffset.y = 2.5
+
+            const targetPos = vehiclePos.clone().add(behindOffset)
+            this.camera.position.lerp(targetPos, this.game.ticker.delta * 5)
+
+            const lookTarget = vehiclePos.clone()
+            lookTarget.y += 0.5
+            this.camera.lookAt(lookTarget)
+        }
+        else if(this.mode === View.MODE_DIRECTIVE)
+        {
+            const vehiclePos = this.game.physicalVehicle.position
+            const forward = this.game.physicalVehicle.forward
+            const goingForward = this.game.physicalVehicle.goingForward
+            const speed = this.game.physicalVehicle.speed
+
+            if(speed > 0.5)
+                this.directiveLastForward = goingForward
+
+            const behindOffset = forward.clone().multiplyScalar(this.directiveLastForward ? -6 : 6)
+            behindOffset.y = 2.5
+
+            const targetPos = vehiclePos.clone().add(behindOffset)
+            this.camera.position.lerp(targetPos, this.game.ticker.delta * 5)
+
+            const lookTarget = vehiclePos.clone()
+            lookTarget.y += 0.5
+            this.camera.lookAt(lookTarget)
+        }
+        else if(this.mode === View.MODE_DRIVER)
+        {
+            const vehiclePos = this.game.physicalVehicle.position
+            const forward = this.game.physicalVehicle.forward
+
+            const bonnetOffset = forward.clone().multiplyScalar(1.2)
+            bonnetOffset.y = 0.9
+
+            const targetPos = vehiclePos.clone().add(bonnetOffset)
+            this.camera.position.copy(targetPos)
+
+            const lookDir = forward.clone()
+            lookDir.y = 0
+            const lookTarget = targetPos.clone().add(lookDir.multiplyScalar(10))
+            this.camera.lookAt(lookTarget)
         }
 
         // Cameras matrices
         this.camera.updateMatrixWorld()
         this.defaultCamera.updateMatrixWorld()
-        this.freeCamera.updateMatrixWorld()
         
         // Optimal area
         if(this.optimalArea.needsUpdate)

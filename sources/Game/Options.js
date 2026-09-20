@@ -1,4 +1,5 @@
 import { Game } from './Game.js'
+import { View } from './View.js'
 
 export class Options
 {
@@ -9,6 +10,7 @@ export class Options
 
         this.setSound()
         this.setQuality()
+        this.setCamera()
         this.setRespawn()
         this.setReset()
         this.setRenderer()
@@ -36,6 +38,28 @@ export class Options
         this.game.quality.events.on('change', () =>
         {
             text.textContent = this.game.quality.level === 0 ? 'High' : 'Low'
+        })
+    }
+
+    setCamera()
+    {
+        const element = this.element.querySelector('.js-camera-toggle')
+        const text = element.querySelector('span')
+
+        const labels = { [View.MODE_FIXED]: 'Fixed', [View.MODE_FORWARD]: 'Forward', [View.MODE_DIRECTIVE]: 'Directive', [View.MODE_DRIVER]: 'Driver' }
+        text.textContent = labels[this.game.view.mode] || 'Fixed'
+
+        element.addEventListener('click', () =>
+        {
+            const modes = [View.MODE_FIXED, View.MODE_FORWARD, View.MODE_DIRECTIVE, View.MODE_DRIVER]
+            const next = modes[(modes.indexOf(this.game.view.mode) + 1) % modes.length]
+            this.game.view.setMode(next)
+            text.textContent = labels[next]
+        })
+
+        this.game.view.events.on('modeChange', (mode) =>
+        {
+            text.textContent = labels[mode] || 'Fixed'
         })
     }
 
@@ -115,4 +139,5 @@ export class Options
             update(false)
         })
     }
+
 }

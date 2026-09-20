@@ -39,6 +39,7 @@ import { RayCursor } from './RayCursor.js'
 import { Water } from './Water.js'
 import { Reveal } from './Reveal.js'
 import { KonamiCode } from './KonamiCode.js'
+import { CheatCode } from './CheatCode.js'
 import { Achievements } from './Achievements.js'
 import { Notifications } from './Notifications.js'
 import { Quality } from './Quality.js'
@@ -107,9 +108,9 @@ export class Game
             [ 'soundTexture',               `intro/sound.${compressedTextureExtension}`,               compressedTextureFormat, TextureConfigs.halfRepeat ],
             [ 'paletteTexture',             `palette.${compressedTextureExtension}`,                   compressedTextureFormat, TextureConfigs.sRGB ],
         ])
-        this.options = new Options()
         this.respawns = new Respawns(import.meta.env.VITE_PLAYER_SPAWN || 'landing')
         this.view = new View()
+        this.options = new Options()
         this.rendering.setPostprocessing()
         this.rendering.start()
         this.reveal = new Reveal()
@@ -184,6 +185,7 @@ export class Game
         this.interactivePoints = new InteractivePoints()
         this.konamiCode = new KonamiCode()
         this.achievements = new Achievements()
+        this.cheatCode = new CheatCode()
         this.tornado = new Tornado()
         this.map = new Map()
         this.title = new Title()

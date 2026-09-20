@@ -20,6 +20,7 @@ export class LandingArea extends Area
         this.setControls()
         this.setBonfire()
         this.setAchievement()
+        this.setInput()
     }
 
     setLetters()
@@ -50,40 +51,49 @@ export class LandingArea extends Area
         centerPosition.divideScalar(references.length)
         centerPosition.y += 2.5
 
-        const canvas = document.createElement('canvas')
-        canvas.width = 1024
-        canvas.height = 192
+        this.nameCanvas = document.createElement('canvas')
+        this.nameCanvas.width = 1024
+        this.nameCanvas.height = 192
 
-        const ctx = canvas.getContext('2d')
-        ctx.fillStyle = '#000000'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        this.nameCtx = this.nameCanvas.getContext('2d')
+        this.drawNameText()
 
-        ctx.font = '900 96px "Nunito"'
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillStyle = '#ffffff'
-        ctx.fillText('MUHAMMED RASAL', canvas.width / 2, canvas.height / 2)
-
-        const nameTexture = new THREE.Texture(canvas)
-        nameTexture.minFilter = THREE.NearestFilter
-        nameTexture.magFilter = THREE.NearestFilter
-        nameTexture.needsUpdate = true
+        this.nameTexture = new THREE.Texture(this.nameCanvas)
+        this.nameTexture.minFilter = THREE.NearestFilter
+        this.nameTexture.magFilter = THREE.NearestFilter
+        this.nameTexture.needsUpdate = true
 
         const material = new THREE.MeshBasicNodeMaterial({ transparent: true, side: THREE.DoubleSide })
         const nameOutput = Fn(() =>
         {
-            const alpha = texture(nameTexture, uv()).r
+            const sampled = texture(this.nameTexture, uv())
+            const alpha = sampled.a
             alpha.lessThan(0.5).discard()
-            return vec4(vec3(1), 1)
+            return vec4(sampled.rgb, 1)
         })
         material.outputNode = nameOutput()
 
         const geometry = new THREE.PlaneGeometry(12, 2.25)
-        const mesh = new THREE.Mesh(geometry, material)
-        mesh.position.copy(centerPosition)
-        mesh.rotation.x = -Math.PI * 0.1
-        mesh.renderOrder = 5
-        this.game.scene.add(mesh)
+        this.nameMesh = new THREE.Mesh(geometry, material)
+        this.nameMesh.position.copy(centerPosition)
+        this.nameMesh.rotation.x = -Math.PI * 0.1
+        this.nameMesh.renderOrder = 5
+        this.game.scene.add(this.nameMesh)
+    }
+
+    drawNameText()
+    {
+        const ctx = this.nameCtx
+        const canvas = this.nameCanvas
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+        ctx.font = '900 96px "Nunito"'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+
+        ctx.fillStyle = '#ffffff'
+        ctx.fillText('MUHAMMED RASAL', canvas.width / 2, canvas.height / 2)
     }
 
     setKiosk()
@@ -314,6 +324,10 @@ export class LandingArea extends Area
         {
             this.game.achievements.setProgress('landingLeave', 1)
         })
+    }
+
+    setInput()
+    {
     }
 
     update()

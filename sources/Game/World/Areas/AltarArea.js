@@ -411,6 +411,7 @@ export class AltarArea extends Area
                     this.sounds.deathBell1.play()
                 })
                 this.game.achievements.setProgress('sacrifice', 1)
+                this.game.cheatCode.onAltarSacrifice()
             }
         )
     }

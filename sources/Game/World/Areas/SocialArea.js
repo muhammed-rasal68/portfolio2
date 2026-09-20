@@ -277,7 +277,7 @@ export class SocialArea extends Area
                 game.view.focusPoint.isTracking = false
                 window.setTimeout(() =>
                 {
-                    this.game.view.setMode(View.MODE_FREE)
+                    this.game.view.setMode(View.MODE_FIXED)
                 }, 1000)
 
                 // Weather

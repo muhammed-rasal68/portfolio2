@@ -283,6 +283,20 @@ export class Gamepad
                 this.events.trigger('change', [ savedButton ])
         }
 
+        // Combo: select + start = camera toggle
+        if(this.buttons.select?.pressed && this.buttons.start?.pressed)
+        {
+            if(!this._selectStartComboActive)
+            {
+                this._selectStartComboActive = true
+                this.events.trigger('selectStartCombo')
+            }
+        }
+        else
+        {
+            this._selectStartComboActive = false
+        }
+
         /**
          * Joysticks
          */

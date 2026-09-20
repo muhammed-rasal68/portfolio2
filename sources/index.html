@@ -299,6 +299,17 @@
                                         </tr>
                                         <tr>
                                             <td>
+                                                Camera 
+                                            </td>
+                                            <td>
+                                                <button class="js-camera-toggle camera-toggle button is-small has-tooltip">
+                                                    <div class="tooltip">Toggles camera view</div>
+                                                    <span>Fixed</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
                                                 I'm stuck!
                                             </td>
                                             <td>
@@ -428,6 +439,22 @@
                                                             <td><span class="key">H</span></td>
                                                             <td>Honk</td>
                                                         </tr>
+                                                        <tr>
+                                                            <td><span class="key">I</span> / <span class="key">K</span></td>
+                                                            <td>Camera orbit up / down</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><span class="key">J</span> / <span class="key">L</span></td>
+                                                            <td>Camera orbit left / right</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><span class="key">U</span></td>
+                                                            <td>Reset camera angle</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><span class="key">V</span></td>
+                                                            <td>Toggle camera view</td>
+                                                        </tr>
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -449,6 +476,10 @@
                                                         <tr>
                                                             <td><span class="key">Tap (on the car)</span></td>
                                                             <td>Jump</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><span class="key">Three fingers (tap)</span></td>
+                                                            <td>Toggle camera view</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -520,15 +551,18 @@
                                                         </tr>
                                                         <tr>
                                                             <td><span class="key">Joystick Right</span></td>
-                                                            <td>Move camera</td>
+                                                            <td>Camera orbit</td>
                                                         </tr>
                                                         <tr>
                                                             <td><span class="key">Joystick Right (press)</span></td>
                                                             <td>Zoom in/out</td>
                                                         </tr>
                                                         <tr>
-                                                            <td><span class="key">Select</span></td>
-                                                            <td>Reset</td>
+                                                            <td>
+                                                                <span class="is-gamepad-button is-xbox key">Select + Start</span>
+                                                                <span class="is-gamepad-button is-playstation key">Select + Options</span>
+                                                            </td>
+                                                            <td>Toggle camera view</td>
                                                         </tr>
                                                         <tr>
                                                             <td><span class="key">Start</span></td>
@@ -918,6 +952,36 @@
         <!-- Notifications -->
         <div class="js-notifications notifications">
             <div class="js-items items"></div>
+        </div>
+
+        <!-- Changelog Notification -->
+        <div class="js-changelog-notification changelog-notification">
+            <div class="changelog-notification-inner">
+                <div class="changelog-notification-header">
+                    <span class="changelog-notification-title">What's New</span>
+                    <button class="js-changelog-close changelog-notification-close">&times;</button>
+                </div>
+                <div class="changelog-notification-body">
+                    <div class="changelog-notification-section">
+                        <div class="changelog-notification-section-title">4 Camera Views</div>
+                        <div class="changelog-notification-item">Fixed - Classic orbit camera</div>
+                        <div class="changelog-notification-item">Forward - Always behind the car</div>
+                        <div class="changelog-notification-item">Directive - Adapts to driving direction</div>
+                        <div class="changelog-notification-item">Driver - Bonnet view</div>
+                    </div>
+                    <div class="changelog-notification-section">
+                        <div class="changelog-notification-section-title">Smooth Camera Orbit</div>
+                        <div class="changelog-notification-item">Velocity-based continuous orbiting</div>
+                        <div class="changelog-notification-item">Buttery acceleration & deceleration</div>
+                    </div>
+                    <div class="changelog-notification-section">
+                        <div class="changelog-notification-section-title">Toggle Controls</div>
+                        <div class="changelog-notification-item">Keyboard: V</div>
+                        <div class="changelog-notification-item">Touch: Three-finger tap</div>
+                        <div class="changelog-notification-item">Gamepad: Select + Start</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>

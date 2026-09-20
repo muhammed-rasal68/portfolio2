@@ -112,7 +112,11 @@ export class Pointer
         {
             _event.preventDefault()
 
+            const wasThreeFinger = this.upcomingTouches.length >= 3
             this.upcomingTouches = [ ..._event.touches ]
+
+            if(wasThreeFinger && this.upcomingTouches.length < 3)
+                this.events.trigger('threeFingerTap')
 
             if(this.upcomingTouches.length === 0 || this.upcomingTouches.length === 1)
                 this.upcomingDown = false

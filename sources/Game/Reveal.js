@@ -224,6 +224,36 @@ export class Reveal
             this.game.menu.preopen()
 
             this.game.ticker.events.off('tick', this.update)
+
+            // Show changelog notification once
+            if(!localStorage.getItem('changelogShown_v2'))
+            {
+                const notification = document.querySelector('.js-changelog-notification')
+                const closeBtn = document.querySelector('.js-changelog-close')
+
+                if(notification && closeBtn)
+                {
+                    setTimeout(() =>
+                    {
+                        notification.classList.add('is-visible')
+                    }, 1500)
+
+                    const close = () =>
+                    {
+                        notification.classList.remove('is-visible')
+                        notification.classList.add('is-leaving')
+                        localStorage.setItem('changelogShown_v2', '1')
+                    }
+
+                    closeBtn.addEventListener('click', close)
+
+                    notification.addEventListener('click', (e) =>
+                    {
+                        if(e.target === notification)
+                            close()
+                    })
+                }
+            }
         }
 
         this.step = step
