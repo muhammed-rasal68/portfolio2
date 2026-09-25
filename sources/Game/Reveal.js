@@ -225,14 +225,17 @@ export class Reveal
 
             this.game.ticker.events.off('tick', this.update)
 
-            // Show changelog notification once
+            // Show changelog notification once (draggable, closable)
             if(!localStorage.getItem('changelogShown_v3'))
             {
                 const notification = document.querySelector('.js-changelog-notification')
                 const closeBtn = document.querySelector('.js-changelog-close')
+                const header = document.querySelector('.js-changelog-header')
 
-                if(notification && closeBtn)
+                if(notification && closeBtn && !notification.dataset.changelogWired)
                 {
+                    notification.dataset.changelogWired = '1'
+
                     setTimeout(() =>
                     {
                         notification.classList.add('is-visible')
@@ -240,18 +243,96 @@ export class Reveal
 
                     const close = () =>
                     {
+                        if(!notification.classList.contains('is-visible'))
+                            return
                         notification.classList.remove('is-visible')
                         notification.classList.add('is-leaving')
                         localStorage.setItem('changelogShown_v3', '1')
                     }
 
-                    closeBtn.addEventListener('click', close)
+                    closeBtn.addEventListener('click', (e) =>
+                    {
+                        e.stopPropagation()
+                        close()
+                    })
 
                     notification.addEventListener('click', (e) =>
                     {
                         if(e.target === notification)
                             close()
                     })
+
+                    document.addEventListener('keydown', (e) =>
+                    {
+                        if(e.key === 'Escape')
+                            close()
+                    })
+
+                    // Drag via header (mouse + touch through Pointer Events)
+                    if(header)
+                    {
+                        let dragging = false
+                        let startX = 0
+                        let startY = 0
+                        let baseX = 0
+                        let baseY = 0
+
+                        header.addEventListener('pointerdown', (e) =>
+                        {
+                            if(e.target.closest('.js-changelog-close'))
+                                return
+                            if(!notification.classList.contains('is-visible'))
+                                return
+
+                            const rect = notification.getBoundingClientRect()
+                            notification.style.left = `${rect.left}px`
+                            notification.style.top = `${rect.top}px`
+                            notification.style.transform = 'none'
+
+                            dragging = true
+                            startX = e.clientX
+                            startY = e.clientY
+                            baseX = rect.left
+                            baseY = rect.top
+                            notification.classList.add('is-dragging')
+
+                            if(header.setPointerCapture && e.pointerId !== undefined)
+                            {
+                                try { header.setPointerCapture(e.pointerId) } catch(_err) { /* noop */ }
+                            }
+                            e.preventDefault()
+                        })
+
+                        header.addEventListener('pointermove', (e) =>
+                        {
+                            if(!dragging)
+                                return
+
+                            const width = notification.offsetWidth
+                            const height = notification.offsetHeight
+                            const nextX = Math.min(
+                                Math.max(baseX + (e.clientX - startX), -width + 60),
+                                window.innerWidth - 60
+                            )
+                            const nextY = Math.min(
+                                Math.max(baseY + (e.clientY - startY), 0),
+                                window.innerHeight - 40
+                            )
+                            notification.style.left = `${nextX}px`
+                            notification.style.top = `${nextY}px`
+                        })
+
+                        const endDrag = () =>
+                        {
+                            if(!dragging)
+                                return
+                            dragging = false
+                            notification.classList.remove('is-dragging')
+                        }
+
+                        header.addEventListener('pointerup', endDrag)
+                        header.addEventListener('pointercancel', endDrag)
+                    }
                 }
             }
         }
