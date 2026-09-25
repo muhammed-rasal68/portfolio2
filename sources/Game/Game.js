@@ -49,6 +49,7 @@ import { PreRenderer } from './PreRenderer.js'
 import { Options } from './Options.js'
 import gsap from 'gsap'
 import { Map } from './Map.js'
+import { CockpitHUD } from './CockpitHUD.js'
 
 export class Game
 {
@@ -190,6 +191,7 @@ export class Game
         this.map = new Map()
         this.title = new Title()
         this.world.step(1)
+        this.cockpitHUD = new CockpitHUD()
         this.overlay = new Overlay()
 
         // Pre-render if quality high

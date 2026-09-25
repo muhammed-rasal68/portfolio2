@@ -147,7 +147,7 @@ export class Pointer
                 {
                     const dX = this.upcomingTouches[i].clientX - this.upcomingTouches[j].clientX
                     const dY = this.upcomingTouches[i].clientY - this.upcomingTouches[j].clientY
-                    const distance = Math.sqrt(dX * dX, dY * dY)
+                    const distance = Math.hypot(dX, dY)
 
                     if(distance > maxDistance)
                         maxDistance = distance

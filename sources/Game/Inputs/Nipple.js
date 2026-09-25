@@ -19,6 +19,7 @@ export class Nipple
 
         this.active = false
         this.animated = false
+        this.hiddenByMode = false
         this.angle = 0
         this.progress = 0
         this.smallestAngle = 0
@@ -230,6 +231,15 @@ export class Nipple
 
     update()
     {
+        if(this.hiddenByMode)
+        {
+            // Fully parked while arrows drive: no visual, no stuck input
+            this.active = false
+            this.progress = 0
+            this.group.visible = false
+            return
+        }
+
         if(this.active || this.animated)
         {
             // Smallest angle and forward

@@ -99,3 +99,203 @@
                 height 38px
                 background url('/ui/actions/actions-icon-open.webp')
                 background-size 38px 38px
+
+.mobile-arrows
+    display none
+    position absolute
+    bottom 140px
+    left 20px
+    width 160px
+    height 160px
+    pointer-events none
+    -webkit-user-select none
+    -moz-user-select none
+    user-select none
+    z-index 10
+
+    &.is-active
+        display block
+
+    .arrow-up
+    .arrow-down
+    .arrow-left
+    .arrow-right
+        position absolute
+        width 52px
+        height 52px
+        border-radius 50%
+        background rgba(255, 255, 255, 0.15)
+        border 2px solid rgba(255, 255, 255, 0.4)
+        color rgba(255, 255, 255, 0.8)
+        font-size 18px
+        line-height 52px
+        text-align center
+        padding 0
+        margin 0
+        pointer-events auto
+        cursor pointer
+        -webkit-tap-highlight-color transparent
+        transition background 0.1s
+
+        &:active
+            background rgba(255, 255, 255, 0.35)
+
+    .arrow-up
+        top 0
+        left 50%
+        transform translateX(-50%)
+
+    .arrow-down
+        bottom 0
+        left 50%
+        transform translateX(-50%)
+
+    .arrow-left
+        top 50%
+        left 0
+        transform translateY(-50%)
+
+    .arrow-right
+        top 50%
+        right 0
+        transform translateY(-50%)
+
+.cockpit-hud
+    display none
+    position absolute
+    inset 0
+    pointer-events none
+    z-index 9
+    font-family "Nunito", sans-serif
+    -webkit-user-select none
+    -moz-user-select none
+    user-select none
+
+    &.is-active
+        display block
+
+    .cluster
+        position absolute
+        left 50%
+        bottom 14px
+        transform translateX(-50%)
+        min-width 230px
+        padding 8px 16px 10px
+        border-radius 14px
+        background rgba(10, 12, 18, 0.55)
+        border 1px solid rgba(125, 211, 252, 0.35)
+        box-shadow 0 4px 24px rgba(0, 0, 0, 0.35)
+        color #e5e7eb
+        text-align center
+        backdrop-filter blur(4px)
+
+        .speed-row
+            display flex
+            align-items baseline
+            justify-content center
+            gap 8px
+
+            .speed-value
+                font-size 44px
+                font-weight 900
+                line-height 1
+                font-variant-numeric tabular-nums
+
+            .speed-unit
+                font-size 13px
+                letter-spacing 2px
+                color #7dd3fc
+
+        .rpm-bar
+            margin 6px auto 4px
+            width 200px
+            height 8px
+            border-radius 4px
+            background rgba(255, 255, 255, 0.12)
+            overflow hidden
+
+            .rpm-fill
+                width 100%
+                height 100%
+                border-radius 4px
+                background linear-gradient(90deg, #38e1ff, #a855f7 65%, #ef4444 90%)
+                transform scaleX(0)
+                transform-origin left center
+
+                &.is-redline
+                    filter brightness(1.4)
+
+        .rpm-row
+            display flex
+            align-items center
+            justify-content space-between
+            font-size 13px
+            font-weight 700
+            letter-spacing 1px
+            color #cbd5e1
+
+            .steer
+                display inline-block
+                font-size 20px
+                color #facc15
+                transition transform 0.05s linear
+
+        .hint
+            margin-top 4px
+            font-size 10px
+            letter-spacing 0.5px
+            color rgba(203, 213, 225, 0.7)
+
+    .side-btns
+        position absolute
+        right 14px
+        top 50%
+        transform translateY(-50%)
+        display flex
+        flex-direction column
+        gap 10px
+        pointer-events none
+
+        .side-btn
+            pointer-events auto
+            width 74px
+            padding 10px 0
+            border-radius 12px
+            border 1px solid rgba(255, 255, 255, 0.35)
+            background rgba(15, 18, 28, 0.65)
+            color #fff
+            font-size 12px
+            font-weight 900
+            letter-spacing 1px
+            cursor pointer
+            -webkit-tap-highlight-color transparent
+            touch-action none
+
+            &.is-held
+            &:active
+                filter brightness(1.5)
+
+            &.boost
+                border-color #a855f7
+                color #d8b4fe
+
+            &.brake
+                border-color #ef4444
+                color #fca5a5
+
+            &.honk
+                border-color #facc15
+                color #fde68a
+
+            &.cam
+            &.reset
+                border-color #38e1ff
+                color #a5f3fc
+
+        @media only screen and (max-width 520px)
+            right 8px
+
+            .side-btn
+                width 62px
+                padding 8px 0
+                font-size 11px

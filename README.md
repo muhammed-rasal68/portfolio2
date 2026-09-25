@@ -41,6 +41,14 @@ See `.env.example` for all options. Key vars:
 | `VITE_LOG` | Debug logging |
 | `VITE_ANALYTICS_TAG` | Google Analytics ID |
 
+## What's New
+
+Latest: driver cockpit with 3D interior + HUD (speedometer, RPM, BOOST/BRAKE/HONK/CAM/HEAD buttons),
+driver head-look (mouse/touch/gamepad/IJKL, wheel/pinch FOV zoom), mobile driving arrows for
+non-fixed camera modes, billboard labels, and touch input fixes.
+
+See [CHANGELOG.md](./CHANGELOG.md) for the full list (shown once via the in-game popup).
+
 ## Deployment
 
 Build outputs to `dist/`. Deploy to any static host (Netlify, Vercel, GitHub Pages).

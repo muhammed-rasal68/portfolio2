@@ -3,10 +3,11 @@ import { Game } from '../Game.js'
 import { Track } from '../Tracks.js'
 import { Trails } from '../Trails.js'
 import { remapClamp } from '../utilities/maths.js'
-import { cameraPosition, color, Fn, min, mix, normalWorld, positionViewDirection, positionWorld, screenCoordinate, texture, uniform, uv, vec2, vec3, vec4 } from 'three/tsl'
+import { cameraPosition, color, Fn, min, mix, normalWorld, positionViewDirection, positionWorld, reflector, screenCoordinate, texture, uniform, uv, vec2, vec3, vec4 } from 'three/tsl'
 import { clamp } from 'three/src/math/MathUtils.js'
 import gsap from 'gsap'
 import { MeshDefaultMaterial } from '../Materials/MeshDefaultMaterial.js'
+import { View } from '../View.js'
 
 export class VisualVehicle
 {
@@ -24,6 +25,7 @@ export class VisualVehicle
         this.setAntenna()
         this.setBoostTrails()
         this.setBoostAnimation()
+        this.setCockpit()
         this.setScreenPosition()
         this.setPaints()
 
@@ -49,6 +51,9 @@ export class VisualVehicle
             const part = this.parts[partName]
             part.removeFromParent()
         }
+
+        if(this.cockpit && this.cockpit.group)
+            this.cockpit.group.removeFromParent()
 
         this.game.tracks.remove(this.mainGroundTrack)
 
@@ -415,9 +420,263 @@ export class VisualVehicle
         this.screenPosition = new THREE.Vector2(0, 0)
     }
 
+    /**
+     * Full cockpit — procedural interior attached to the chassis.
+     * Chassis-local axes: +X forward, +Y up, +Z side.
+     * Driver sits at x ~ 0.1, z ~ +0.38. Dash ahead at x ~ 0.6.
+     * Group is only visible in driver view so external cams stay clean.
+     */
+    setCockpit()
+    {
+        this.cockpit = {}
+        this.cockpit.group = new THREE.Group()
+        this.cockpit.group.visible = false
+        this.parts.chassis.add(this.cockpit.group)
+
+        const plastic = new THREE.MeshStandardMaterial({ color: '#1b1e26', roughness: 0.85, metalness: 0.15 })
+        const plasticSoft = new THREE.MeshStandardMaterial({ color: '#262a35', roughness: 0.9, metalness: 0.05 })
+        const accent = new THREE.MeshStandardMaterial({ color: '#0e0f13', roughness: 0.6, metalness: 0.3 })
+        const glassMat = new THREE.MeshStandardMaterial({ color: '#8fb7d8', roughness: 0.1, metalness: 0.6, transparent: true, opacity: 0.28 })
+        const chromeMat = new THREE.MeshStandardMaterial({ color: '#9aa2b1', roughness: 0.3, metalness: 0.9 })
+
+        const addBox = (w, h, d, x, y, z, mat = plastic) =>
+        {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat)
+            mesh.position.set(x, y, z)
+            this.cockpit.group.add(mesh)
+            return mesh
+        }
+
+        // Dashboard main + top pad + cluster binnacle (in front of driver).
+        // Car body in this space: x[-1.26, 1.45], y[-0.38, 0.63] — dash must
+        // sit below eye (y 0.42) with its top ~0.30 so it frames the bottom.
+        addBox(0.28, 0.16, 1.15, 0.45, 0.18, 0, plastic)
+        addBox(0.14, 0.05, 1.15, 0.38, 0.28, 0, plasticSoft)
+        addBox(0.16, 0.12, 0.45, 0.33, 0.30, 0.33, accent)
+
+        // Door side panels (cockpit enclosure feel)
+        addBox(0.85, 0.25, 0.06, -0.05, 0.10, 0.62, plasticSoft)
+        addBox(0.85, 0.25, 0.06, -0.05, 0.10, -0.62, plasticSoft)
+
+        // Center console + shifter
+        addBox(0.50, 0.18, 0.22, 0.0, -0.02, 0, accent)
+        const shifter = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.18, 10), chromeMat)
+        shifter.position.set(-0.05, 0.15, 0)
+        shifter.rotation.z = -0.25
+        this.cockpit.group.add(shifter)
+        const shiftKnob = new THREE.Mesh(new THREE.SphereGeometry(0.035, 14, 12), new THREE.MeshStandardMaterial({ color: '#c81e3a', roughness: 0.35 }))
+        shiftKnob.position.set(-0.08, 0.23, 0)
+        this.cockpit.group.add(shiftKnob)
+
+        // Side console 3D buttons (decorative — real input via HUD DOM)
+        const btnGeo = new THREE.BoxGeometry(0.06, 0.03, 0.06)
+        const btnDefs = [
+            { color: '#a855f7', x: 0.10, z: 0.06 },  // boost
+            { color: '#ef4444', x: 0.10, z: -0.02 }, // brake
+            { color: '#facc15', x: 0.10, z: -0.10 }, // honk
+        ]
+        this.cockpit.consoleButtons = []
+        for(const def of btnDefs)
+        {
+            const m = new THREE.Mesh(btnGeo, new THREE.MeshBasicMaterial({ color: def.color }))
+            m.position.set(def.x, 0.08, def.z)
+            this.cockpit.group.add(m)
+            this.cockpit.consoleButtons.push(m)
+        }
+
+        // Windshield frame: A-pillars (dash top -> roof) + top bar + mirror.
+        // Roof skin is at y ~0.63, so the bar sits just under it.
+        const pillarGeo = new THREE.CylinderGeometry(0.024, 0.024, 0.38, 8)
+        for(const z of [0.55, -0.55])
+        {
+            const pillar = new THREE.Mesh(pillarGeo, plastic)
+            pillar.position.set(0.35, 0.45, z)
+            pillar.rotation.z = -0.30
+            this.cockpit.group.add(pillar)
+        }
+        addBox(0.08, 0.05, 1.18, 0.24, 0.60, 0, plastic)
+        const mirror = addBox(0.04, 0.08, 0.26, 0.27, 0.50, 0, accent)
+        mirror.material = plastic
+        const mirrorGlass = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.22, 0.06),
+            new THREE.MeshBasicMaterial({ color: '#bcd6e8' })
+        )
+        mirrorGlass.position.set(0.248, 0.50, 0)
+        mirrorGlass.rotation.y = -Math.PI / 2
+        this.cockpit.group.add(mirrorGlass)
+        // Windshield glass (very transparent, gives reflections / enclosure)
+        const windshield = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 0.32), glassMat)
+        windshield.position.set(0.33, 0.45, 0)
+        windshield.rotation.y = -Math.PI / 2
+        this.cockpit.group.add(windshield)
+
+        // Steering column + wheel (torus facing the driver, axis ~ X).
+        // Wheel center ~0.34m from the eye, radius 0.13 -> fills lower-center
+        // naturally instead of half the screen.
+        const column = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.24, 10), chromeMat)
+        column.position.set(0.26, 0.22, 0.33)
+        column.rotation.z = Math.PI / 2 - 0.35
+        this.cockpit.group.add(column)
+
+        this.cockpit.steeringGroup = new THREE.Group()
+        this.cockpit.steeringGroup.position.set(0.15, 0.26, 0.33)
+        this.cockpit.steeringGroup.rotation.y = Math.PI / 2
+        this.cockpit.steeringGroup.rotation.x = 0.35 // tilt toward driver
+        this.cockpit.group.add(this.cockpit.steeringGroup)
+
+        const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.022, 12, 32), plastic)
+        this.cockpit.steeringGroup.add(wheelRim)
+        const spokeGeo = new THREE.BoxGeometry(0.026, 0.24, 0.018)
+        const spoke = new THREE.Mesh(spokeGeo, accent)
+        this.cockpit.steeringGroup.add(spoke)
+        const spoke2 = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.02, 0.02), accent)
+        spoke2.position.set(0, -0.07, 0.01)
+        spoke2.scale.x = 1
+        this.cockpit.steeringGroup.add(spoke2)
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.05, 16), new THREE.MeshStandardMaterial({ color: '#c81e3a', roughness: 0.4 }))
+        hub.rotation.x = Math.PI / 2
+        this.cockpit.steeringGroup.add(hub)
+        // Steering paddle glow (boost indicator)
+        this.cockpit.steerGlow = new THREE.Mesh(
+            new THREE.TorusGeometry(0.13, 0.008, 8, 32),
+            new THREE.MeshBasicMaterial({ color: '#a855f7', transparent: true, opacity: 0 })
+        )
+        this.cockpit.steeringGroup.add(this.cockpit.steerGlow)
+
+        // Gauges: two canvas-texture dials on the binnacle, facing the driver (-X)
+        const makeGauge = (z) =>
+        {
+            const canvas = document.createElement('canvas')
+            canvas.width = 256
+            canvas.height = 256
+            const ctx = canvas.getContext('2d')
+            const tex = new THREE.CanvasTexture(canvas)
+            tex.colorSpace = THREE.SRGBColorSpace
+            const mesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.17, 0.17),
+                new THREE.MeshBasicMaterial({ map: tex, transparent: true })
+            )
+            mesh.position.set(0.245, 0.31, z)
+            mesh.rotation.y = -Math.PI / 2
+            this.cockpit.group.add(mesh)
+            return { canvas, ctx, tex, mesh }
+        }
+        this.cockpit.speedGauge = makeGauge(0.25)
+        this.cockpit.rpmGauge = makeGauge(0.41)
+        this.cockpit.speedKmh = 0
+        this.cockpit.rpm = 0
+        this.cockpit._gaugeTimer = 0
+        this.drawGauge(this.cockpit.speedGauge, 0, 220, 'km/h', 'SPEED', false)
+        this.drawGauge(this.cockpit.rpmGauge, 0, 8, 'x1000', 'RPM', true)
+
+        // Dashboard glow strip
+        const strip = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.015, 1.0), new THREE.MeshBasicMaterial({ color: '#38e1ff' }))
+        strip.position.set(0.305, 0.22, 0)
+        this.cockpit.group.add(strip)
+        this.cockpit.dashStrip = strip
+    }
+
+    drawGauge(gauge, value, max, unit, label, isRpm)
+    {
+        const { ctx, tex } = gauge
+        const S = 256
+        ctx.clearRect(0, 0, S, S)
+        // Face
+        ctx.beginPath()
+        ctx.arc(128, 128, 120, 0, Math.PI * 2)
+        ctx.fillStyle = '#101319'
+        ctx.fill()
+        ctx.lineWidth = 6
+        ctx.strokeStyle = '#2a2f3a'
+        ctx.stroke()
+        // Ticks
+        const a0 = Math.PI * 0.75
+        const a1 = Math.PI * 2.25
+        const ticks = isRpm ? 8 : 11
+        for(let i = 0; i <= ticks; i++)
+        {
+            const t = i / ticks
+            const a = a0 + (a1 - a0) * t
+            const red = isRpm && t > 0.75
+            ctx.strokeStyle = red ? '#ef4444' : '#9aa2b1'
+            ctx.lineWidth = (i % 2 === 0) ? 5 : 2
+            const r1 = 100
+            const r2 = (i % 2 === 0) ? 82 : 90
+            ctx.beginPath()
+            ctx.moveTo(128 + Math.cos(a) * r1, 128 + Math.sin(a) * r1)
+            ctx.lineTo(128 + Math.cos(a) * r2, 128 + Math.sin(a) * r2)
+            ctx.stroke()
+        }
+        // Needle
+        const frac = clamp(value / max, 0, 1)
+        const na = a0 + (a1 - a0) * frac
+        ctx.strokeStyle = '#ff3b30'
+        ctx.lineWidth = 6
+        ctx.lineCap = 'round'
+        ctx.beginPath()
+        ctx.moveTo(128, 128)
+        ctx.lineTo(128 + Math.cos(na) * 88, 128 + Math.sin(na) * 88)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(128, 128, 12, 0, Math.PI * 2)
+        ctx.fillStyle = '#e5e7eb'
+        ctx.fill()
+        // Text
+        ctx.fillStyle = '#e5e7eb'
+        ctx.font = 'bold 44px Nunito, sans-serif'
+        ctx.textAlign = 'center'
+        ctx.fillText(isRpm ? value.toFixed(1) : String(Math.round(value)), 128, 190)
+        ctx.fillStyle = '#7dd3fc'
+        ctx.font = 'bold 22px Nunito, sans-serif'
+        ctx.fillText(unit, 128, 214)
+        ctx.fillStyle = '#6b7280'
+        ctx.font = 'bold 18px Nunito, sans-serif'
+        ctx.fillText(label, 128, 62)
+        tex.needsUpdate = true
+    }
+
+    updateCockpit()
+    {
+        if(!this.cockpit || !this.cockpit.group)
+            return
+
+        const inDriver = this.game.view && this.game.view.mode === View.MODE_DRIVER
+        this.cockpit.group.visible = !!inDriver
+        if(!inDriver)
+            return
+
+        // Steering follows player input (max ~100deg)
+        const target = -this.game.player.steering * 1.8
+        this.cockpit.steeringGroup.rotation.z += (target - this.cockpit.steeringGroup.rotation.z) * Math.min(1, this.game.ticker.delta * 12)
+
+        // Speed + RPM from physics
+        const pv = this.game.physicalVehicle
+        const kmh = clamp((pv.xzSpeed || 0) * 3.6, 0, 220)
+        const accel = Math.abs(this.game.player.accelerating || 0)
+        const boost = this.game.player.boosting ? 1 : 0
+        const rpm = clamp(0.9 + accel * 2.2 + (kmh / 220) * 3.6 + boost * 1.2, 0, 8)
+        this.cockpit.speedKmh = kmh
+        this.cockpit.rpm = rpm
+
+        // Boost glow on wheel + dash strip pulse
+        if(this.cockpit.steerGlow)
+            this.cockpit.steerGlow.material.opacity += ((boost ? 0.9 : 0) - this.cockpit.steerGlow.material.opacity) * Math.min(1, this.game.ticker.delta * 8)
+
+        // Redraw gauges at ~12Hz
+        this.cockpit._gaugeTimer += this.game.ticker.delta
+        if(this.cockpit._gaugeTimer > 0.08)
+        {
+            this.cockpit._gaugeTimer = 0
+            this.drawGauge(this.cockpit.speedGauge, kmh, 220, 'km/h', 'SPEED', false)
+            this.drawGauge(this.cockpit.rpmGauge, rpm, 8, 'x1000', 'RPM', true)
+        }
+    }
+
     update()
     {
         const physicalVehicle = this.game.physicalVehicle
+
+        this.updateCockpit()
         
         // Chassis
         this.parts.chassis.position.copy(physicalVehicle.position)

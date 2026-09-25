@@ -1,5 +1,35 @@
 # What's New
 
+## Driver Cockpit & HUD (2026-09-25)
+
+### 3D Cockpit Interior
+- Procedural cockpit attached to the chassis: dashboard, cluster binnacle, door panels, center console, shifter, A-pillars, rear-view mirror, windshield glass
+- Animated steering wheel that follows your steering input
+- Cockpit 3D group is only visible in Driver view so external cameras stay clean
+
+### Cockpit HUD (Driver view only)
+- Speedometer (km/h), RPM bar with redline state, live steering indicator
+- Side buttons: BOOST, BRAKE, HONK, CAM (toggle camera), HEAD reset (recenter head + FOV)
+- Buttons work with mouse + touch via pointer events
+
+### Driver Head-Look
+- Look around from the driver seat with hard head limits (~±83° yaw)
+- Mouse drag to look, wheel to zoom FOV (38–82)
+- Touch: 1–2 finger drag to look, pinch to zoom FOV
+- Gamepad right stick head-look, keyboard I/K/J/L head-look with smooth velocity, U resets
+- Eye sits in the cabin below the roof skin; near plane 0.05 in driver view, restored to 0.1 outside
+- Fog pushed out (1.7x) and camera far extended (200 → 600) so the road ahead stays visible
+
+## Mobile Driving Arrows
+- On-screen arrow buttons (forward/left/right/backward) on touch devices in non-fixed camera modes (Forward, Directive, Driver)
+- Nipple joystick auto-parks while arrows drive so there is no stuck input; arrows release cleanly on mode switch
+- Touch controls doc updated: two-finger drag = orbit, pinch = zoom, arrow buttons = drive
+
+## Labels & Input Fixes
+- Interactive point labels now billboard (face the camera) at any angle
+- Fixed touch pinch distance bug (`Math.sqrt(dx*dx, dy*dy)` → `Math.hypot(dx, dy)`)
+- Two-finger drag now orbits the camera (like I/K/J/L) instead of panning the focus point; tracking re-enables on release
+
 ## Camera System Overhaul
 
 ### 4 Camera Views

@@ -46,5 +46,13 @@ export class Fog
         this.colorB.value.copy(this.game.dayCycles.properties.fogColorB.value)
         this.near.value = this.game.view.optimalArea.nearDistance + this.game.dayCycles.properties.fogNearRatio.value * amplitude
         this.far.value = this.game.view.optimalArea.nearDistance + this.game.dayCycles.properties.fogFarRatio.value * amplitude
+
+        // Driver view looks far ahead down the road — push the fog out so
+        // distant ground doesn't fade before the (now 600) camera far plane
+        if(this.game.view && this.game.view.mode === 4) // View.MODE_DRIVER
+        {
+            const boost = 1.7
+            this.far.value = this.near.value + (this.far.value - this.near.value) * boost
+        }
     }
 }

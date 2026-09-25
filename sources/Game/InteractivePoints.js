@@ -36,6 +36,7 @@ export class InteractivePoints
         this.setMaterials()
         this.setKeyIcon()
         this.setInputs()
+        this.setFacingCamera()
 
         this.game.ticker.events.on('tick', () =>
         {
@@ -177,6 +178,12 @@ export class InteractivePoints
         })
     }
 
+    setFacingCamera()
+    {
+        this._facingGroup = new THREE.Object3D()
+        this._facingGroupUp = new THREE.Vector3(0, 1, 0)
+    }
+
     create(
         position,
         text = '',
@@ -201,6 +208,9 @@ export class InteractivePoints
         group.position.copy(newPosition)
         group.scale.setScalar(0.85)
         this.game.scene.add(group)
+
+        // Store group reference for camera facing
+        const groupRef = group
 
         // Materials
         const materials = []
@@ -332,6 +342,7 @@ export class InteractivePoints
          * Item
          */
         const item = {}
+        item.group = groupRef
         item.position = new THREE.Vector2(position.x, position.z)
         item.interactCallback = interactCallback
         item.revealCallback = revealCallback
@@ -575,6 +586,18 @@ export class InteractivePoints
 
     update()
     {
+        // Face camera
+        const camera = this.game.view.camera
+        for(const item of this.items)
+        {
+            if(item.group.visible)
+            {
+                this._facingGroup.position.copy(item.group.position)
+                this._facingGroup.lookAt(camera.position)
+                item.group.rotation.y = this._facingGroup.rotation.y
+            }
+        }
+
         // Player testing (not cursor intersect)
         const distanceTraveled = Math.hypot(
             this.playerPosition.value.x - this.game.player.position2.x,

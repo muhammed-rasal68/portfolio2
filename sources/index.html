@@ -113,6 +113,39 @@
             </div>
         </div>
 
+        <!-- Mobile directional arrows -->
+        <div class="js-mobile-arrows mobile-arrows">
+            <button class="js-arrow arrow-up" data-action="forward">&#9650;</button>
+            <button class="js-arrow arrow-left" data-action="left">&#9664;</button>
+            <button class="js-arrow arrow-right" data-action="right">&#9654;</button>
+            <button class="js-arrow arrow-down" data-action="backward">&#9660;</button>
+        </div>
+
+        <!-- Cockpit HUD: speedometer / RPM / side buttons (driver view only) -->
+        <div class="js-cockpit-hud cockpit-hud">
+            <div class="cluster">
+                <div class="speed-row">
+                    <span class="js-cockpit-speed speed-value">0</span>
+                    <span class="speed-unit">km/h</span>
+                </div>
+                <div class="rpm-bar">
+                    <div class="js-cockpit-rpm-fill rpm-fill"></div>
+                </div>
+                <div class="rpm-row">
+                    <span>RPM <span class="js-cockpit-rpm">0.0</span></span>
+                    <span class="js-cockpit-steer steer" title="steering">&#9673;</span>
+                </div>
+                <div class="hint">drag to look &middot; wheel / pinch to zoom &middot; U resets</div>
+            </div>
+            <div class="side-btns">
+                <button class="js-cockpit-boost side-btn boost">BOOST</button>
+                <button class="js-cockpit-brake side-btn brake">BRAKE</button>
+                <button class="js-cockpit-honk side-btn honk">HONK</button>
+                <button class="js-cockpit-cam side-btn cam">CAM</button>
+                <button class="js-cockpit-reset side-btn reset">HEAD &#10226;</button>
+            </div>
+        </div>
+
         <!-- Menu trigger -->
         <button class="js-menu-trigger menu-trigger">
             <div class="button-inner">
@@ -470,8 +503,12 @@
                                                             <td>Move the car</td>
                                                         </tr>
                                                         <tr>
-                                                            <td><span class="key">Two fingers</span></td>
-                                                            <td>Move camera / zoom</td>
+                                                            <td><span class="key">Two fingers (drag)</span></td>
+                                                            <td>Orbit camera</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><span class="key">Two fingers (pinch)</span></td>
+                                                            <td>Zoom</td>
                                                         </tr>
                                                         <tr>
                                                             <td><span class="key">Tap (on the car)</span></td>
@@ -480,6 +517,10 @@
                                                         <tr>
                                                             <td><span class="key">Three fingers (tap)</span></td>
                                                             <td>Toggle camera view</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><span class="key">Arrow buttons</span></td>
+                                                            <td>Drive (non-fixed camera)</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -979,6 +1020,17 @@
                         <div class="changelog-notification-item">Keyboard: V</div>
                         <div class="changelog-notification-item">Touch: Three-finger tap</div>
                         <div class="changelog-notification-item">Gamepad: Select + Start</div>
+                    </div>
+                    <div class="changelog-notification-section">
+                        <div class="changelog-notification-section-title">Driver Cockpit</div>
+                        <div class="changelog-notification-item">3D interior + speedometer / RPM HUD</div>
+                        <div class="changelog-notification-item">Drag to look, wheel / pinch to zoom, U resets</div>
+                        <div class="changelog-notification-item">BOOST / BRAKE / HONK / CAM buttons</div>
+                    </div>
+                    <div class="changelog-notification-section">
+                        <div class="changelog-notification-section-title">Mobile Arrows</div>
+                        <div class="changelog-notification-item">Arrow buttons drive in Forward / Directive / Driver</div>
+                        <div class="changelog-notification-item">Two-finger drag orbits, pinch zooms</div>
                     </div>
                 </div>
             </div>

@@ -226,7 +226,7 @@ export class Reveal
             this.game.ticker.events.off('tick', this.update)
 
             // Show changelog notification once
-            if(!localStorage.getItem('changelogShown_v2'))
+            if(!localStorage.getItem('changelogShown_v3'))
             {
                 const notification = document.querySelector('.js-changelog-notification')
                 const closeBtn = document.querySelector('.js-changelog-close')
@@ -242,7 +242,7 @@ export class Reveal
                     {
                         notification.classList.remove('is-visible')
                         notification.classList.add('is-leaving')
-                        localStorage.setItem('changelogShown_v2', '1')
+                        localStorage.setItem('changelogShown_v3', '1')
                     }
 
                     closeBtn.addEventListener('click', close)

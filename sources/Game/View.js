@@ -59,6 +59,7 @@ export class View
         this.setFocusPoint()
         this.setZoom()
         this.setSpherical()
+        this.setDriverLook()
         this.setRoll()
         this.setCameras()
         this.setOptimalArea()
@@ -120,6 +121,18 @@ export class View
         this.mode = mode
 
         this.focusPoint.smoothedPosition.copy(this.focusPoint.position)
+
+        // Fresh head position each time we get in the car
+        if(mode === View.MODE_DRIVER && this.driverLook)
+        {
+            this.driverLook.yaw = 0
+            this.driverLook.pitch = 0
+            this.driverLook.yawSmoothed = 0
+            this.driverLook.pitchSmoothed = 0
+            this.driverLook.yawVelocity = 0
+            this.driverLook.pitchVelocity = 0
+            this.driverLook.fovTarget = this.driverLook.baseFov
+        }
 
         this.events.trigger('modeChange', [ this.mode ])
     }
@@ -311,6 +324,13 @@ export class View
 
         this.game.inputs.events.on('zoom', (action) =>
         {
+            // In driver view the wheel zooms the head (FOV), not the orbit camera
+            if(this.mode === View.MODE_DRIVER && this.driverLook)
+            {
+                this.driverLook.fovTarget += action.value * 4.0
+                this.driverLook.fovTarget = clamp(this.driverLook.fovTarget, this.driverLook.fovLimits.min, this.driverLook.fovLimits.max)
+                return
+            }
             this.zoom.baseRatio -= action.value * this.zoom.sensitivity
             this.zoom.baseRatio = clamp(this.zoom.baseRatio, 0, 1)
         })
@@ -385,6 +405,17 @@ export class View
                 this.userOrbit.theta = 0
                 this.userOrbit.phiVelocity = 0
                 this.userOrbit.thetaVelocity = 0
+
+                if(this.driverLook)
+                {
+                    this.driverLook.yaw = 0
+                    this.driverLook.pitch = 0
+                    this.driverLook.yawSmoothed = 0
+                    this.driverLook.pitchSmoothed = 0
+                    this.driverLook.yawVelocity = 0
+                    this.driverLook.pitchVelocity = 0
+                    this.driverLook.fovTarget = this.driverLook.baseFov
+                }
             }
         })
 
@@ -397,6 +428,49 @@ export class View
             sphericalDebugPanel.addBinding(this.spherical, 'phi', { min: 0, max: Math.PI * 0.5, step: 0.001 })
             sphericalDebugPanel.addBinding(this.spherical, 'theta', { min: - Math.PI, max: Math.PI, step: 0.001 })
             sphericalDebugPanel.addBinding(this.spherical.radius, 'edges', { min: 0, max: 100, step: 0.001 })
+        }
+    }
+
+    /**
+     * Driver head-look: rotate like a head in a car, with hard limits.
+     * yaw > 0 = look right, pitch > 0 = look up.
+     * Mouse drag rotates, wheel zooms FOV. Touch: 1-2 finger drag rotates, pinch zooms.
+     */
+    setDriverLook()
+    {
+        this.driverLook = {}
+        this.driverLook.yaw = 0
+        this.driverLook.pitch = 0
+        this.driverLook.yawSmoothed = 0
+        this.driverLook.pitchSmoothed = 0
+        this.driverLook.yawVelocity = 0
+        this.driverLook.pitchVelocity = 0
+        this.driverLook.yawLimits = { min: -1.45, max: 1.45 } // ~ +/-83deg
+        this.driverLook.pitchLimits = { min: -0.50, max: 0.32 }
+        this.driverLook.mouseSensitivity = 0.0032
+        this.driverLook.touchSensitivity = 0.0058
+        this.driverLook.keyboardSpeed = 1.8
+        this.driverLook.gamepadSensitivity = 2.2
+        this.driverLook.damping = 10
+        this.driverLook.baseFov = 68
+        this.driverLook.fovTarget = 68
+        this.driverLook.fovSmoothed = 68
+        this.driverLook.fovLimits = { min: 38, max: 82 }
+        // Eye sits in the cabin: below the roof skin (y 0.63), behind the
+        // dash, offset to the driver side. Matches the VisualVehicle cockpit.
+        this.driverLook.eyeLocal = new THREE.Vector3(-0.15, 0.42, 0.33)
+        this.driverLook.lookLocal = new THREE.Vector3(10, -0.75, 0)
+        this.driverLook._yawAxis = new THREE.Vector3(0, 1, 0)
+        this.driverLook._pitchAxis = new THREE.Vector3(0, 0, 1)
+
+        this.driverLook.addYaw = (delta) =>
+        {
+            this.driverLook.yaw = clamp(this.driverLook.yaw + delta, this.driverLook.yawLimits.min, this.driverLook.yawLimits.max)
+        }
+
+        this.driverLook.addPitch = (delta) =>
+        {
+            this.driverLook.pitch = clamp(this.driverLook.pitch + delta, this.driverLook.pitchLimits.min, this.driverLook.pitchLimits.max)
         }
     }
 
@@ -436,7 +510,8 @@ export class View
 
     setCameras()
     {
-        this.camera = new THREE.PerspectiveCamera(25, this.game.viewport.ratio, 0.1, 200)
+        // Far bumped to 600 so the driver view sees further ahead (fog still limits, see Fog.js)
+        this.camera = new THREE.PerspectiveCamera(25, this.game.viewport.ratio, 0.1, 600)
         this.camera.position.setFromSphericalCoords(this.spherical.radius.current, this.spherical.phi, this.spherical.theta)
 
         this.defaultCamera = this.camera.clone()
@@ -621,29 +696,65 @@ export class View
 
         this.game.inputs.events.on('viewMapPointer', (action) =>
         {
-            if(this.mode === View.MODE_FIXED)
+            if(action.active)
             {
-                // Focus point
-                if(action.active)
+                // Driver view = head look (mouse drag OR 1-2 finger drag, pinch = FOV zoom)
+                if(this.mode === View.MODE_DRIVER)
                 {
-                    // Map
-                    if(this.game.inputs.pointer.mode === Pointer.MODE_MOUSE || this.game.inputs.pointer.touches.length >= 2)
+                    const isTouch = this.game.inputs.pointer.mode === Pointer.MODE_TOUCH
+                    const sens = isTouch ? this.driverLook.touchSensitivity : this.driverLook.mouseSensitivity
+
+                    this.driverLook.addYaw(this.game.inputs.pointer.delta.x * sens)
+                    this.driverLook.addPitch(-this.game.inputs.pointer.delta.y * sens)
+
+                    // Pinch zoom (FOV)
+                    const pinch = this.game.inputs.pointer.pinch.distanceDelta
+                    if(pinch)
                     {
-                        this.focusPoint.isTracking = false
-                        
-                        const mapMovement = new THREE.Vector2(this.game.inputs.pointer.delta.x, this.game.inputs.pointer.delta.y)                    
-                        mapMovement.rotateAround(new THREE.Vector2(), -this.spherical.theta)
-
-                        const smallestSide = Math.min(this.game.viewport.width, this.game.viewport.height)
-                        mapMovement.multiplyScalar(10 / smallestSide)
-                        
-                        this.focusPoint.position.x -= mapMovement.x * 2
-                        this.focusPoint.position.z -= mapMovement.y * 2
+                        this.driverLook.fovTarget -= pinch * 0.05
+                        this.driverLook.fovTarget = clamp(this.driverLook.fovTarget, this.driverLook.fovLimits.min, this.driverLook.fovLimits.max)
                     }
+                    return
+                }
 
-                    // Pinch
+                if(this.game.inputs.pointer.touches.length >= 2)
+                {
+                    // Two-finger drag: orbit camera (like IJKL) + pinch zoom
+                    this.focusPoint.isTracking = false
+
+                    const sensitivity = 0.005
+                    this.userOrbit.theta -= this.game.inputs.pointer.delta.x * sensitivity
+                    this.userOrbit.phi += this.game.inputs.pointer.delta.y * sensitivity
+
+                    // Pinch zoom
                     this.zoom.baseRatio += this.game.inputs.pointer.pinch.distanceDelta * 0.005
                     this.zoom.baseRatio = clamp(this.zoom.baseRatio, 0, 1)
+                }
+                else if(this.mode === View.MODE_FIXED && this.game.inputs.pointer.mode === Pointer.MODE_MOUSE)
+                {
+                    // Mouse drag in Fixed mode: pan focus point
+                    this.focusPoint.isTracking = false
+
+                    const mapMovement = new THREE.Vector2(this.game.inputs.pointer.delta.x, this.game.inputs.pointer.delta.y)
+                    mapMovement.rotateAround(new THREE.Vector2(), -this.spherical.theta)
+
+                    const smallestSide = Math.min(this.game.viewport.width, this.game.viewport.height)
+                    mapMovement.multiplyScalar(10 / smallestSide)
+
+                    this.focusPoint.position.x -= mapMovement.x * 2
+                    this.focusPoint.position.z -= mapMovement.y * 2
+
+                    // Mouse wheel zoom
+                    this.zoom.baseRatio += this.game.inputs.pointer.pinch.distanceDelta * 0.005
+                    this.zoom.baseRatio = clamp(this.zoom.baseRatio, 0, 1)
+                }
+            }
+            else
+            {
+                // Re-enable tracking when finger/mouse lifts (unless mouse drag in fixed mode)
+                if(this.mode !== View.MODE_FIXED || this.game.inputs.pointer.mode !== Pointer.MODE_MOUSE)
+                {
+                    this.focusPoint.isTracking = true
                 }
             }
         })
@@ -651,12 +762,21 @@ export class View
 
     update()
     {
-        // Gamepad Joystick camera orbit
-        if(this.mode === View.MODE_FIXED && this.game.inputs.gamepad.joysticks.right.active && !this.cinematic.active && this.userOrbit.gamepadEnabled)
+        // Gamepad right stick: head-look in driver view, orbit otherwise
+        if(this.game.inputs.gamepad.joysticks.right.active && !this.cinematic.active && this.userOrbit.gamepadEnabled)
         {
             const rightStick = this.game.inputs.gamepad.joysticks.right
-            this.userOrbit.theta += rightStick.x * this.game.ticker.delta * this.userOrbit.gamepadSensitivity
-            this.userOrbit.phi -= rightStick.y * this.game.ticker.delta * this.userOrbit.gamepadSensitivity
+
+            if(this.mode === View.MODE_DRIVER)
+            {
+                this.driverLook.addYaw(rightStick.x * this.game.ticker.delta * this.driverLook.gamepadSensitivity)
+                this.driverLook.addPitch(-rightStick.y * this.game.ticker.delta * this.driverLook.gamepadSensitivity)
+            }
+            else
+            {
+                this.userOrbit.theta += rightStick.x * this.game.ticker.delta * this.userOrbit.gamepadSensitivity
+                this.userOrbit.phi -= rightStick.y * this.game.ticker.delta * this.userOrbit.gamepadSensitivity
+            }
         }
         else if(this.mode === View.MODE_FIXED && this.game.inputs.gamepad.joysticks.right.active && !this.cinematic.active)
         {
@@ -740,7 +860,7 @@ export class View
             this.zoom.smoothedRatio = lerp(this.zoom.smoothedRatio, this.zoom.ratio, this.game.ticker.delta * 10)
         }
 
-        // Keyboard orbit - smooth velocity-based
+        // Keyboard orbit - smooth velocity-based (fixed cam)
         if(this.mode === View.MODE_FIXED && this.userOrbit.enabled && !this.cinematic.active)
         {
             let phiInput = 0
@@ -769,6 +889,41 @@ export class View
 
             this.userOrbit.phi += this.userOrbit.phiVelocity * dt * this.userOrbit.sensitivity
             this.userOrbit.theta += this.userOrbit.thetaVelocity * dt * this.userOrbit.sensitivity
+        }
+
+        // Keyboard head-look in driver view (IJKL like a head, U resets)
+        if(this.mode === View.MODE_DRIVER && !this.cinematic.active)
+        {
+            const dt = this.game.ticker.delta
+            let yawInput = 0
+            let pitchInput = 0
+
+            if(this.game.inputs.actions.get('orbitLeft')?.active)
+                yawInput -= 1
+            if(this.game.inputs.actions.get('orbitRight')?.active)
+                yawInput += 1
+            if(this.game.inputs.actions.get('orbitUp')?.active)
+                pitchInput += 1
+            if(this.game.inputs.actions.get('orbitDown')?.active)
+                pitchInput -= 1
+
+            this.driverLook.yawVelocity += yawInput * 4 * dt
+            this.driverLook.pitchVelocity += pitchInput * 4 * dt
+
+            const damp = Math.exp(-6 * dt)
+            this.driverLook.yawVelocity *= damp
+            this.driverLook.pitchVelocity *= damp
+
+            this.driverLook.addYaw(this.driverLook.yawVelocity * dt * this.driverLook.keyboardSpeed)
+            this.driverLook.addPitch(this.driverLook.pitchVelocity * dt * this.driverLook.keyboardSpeed * 0.6)
+        }
+
+        // Smooth driver head + FOV toward targets
+        {
+            const k = Math.min(1, this.game.ticker.delta * this.driverLook.damping)
+            this.driverLook.yawSmoothed += (this.driverLook.yaw - this.driverLook.yawSmoothed) * k
+            this.driverLook.pitchSmoothed += (this.driverLook.pitch - this.driverLook.pitchSmoothed) * k
+            this.driverLook.fovSmoothed += (this.driverLook.fovTarget - this.driverLook.fovSmoothed) * Math.min(1, this.game.ticker.delta * 8)
         }
 
         // Apply user orbit
@@ -851,18 +1006,51 @@ export class View
         else if(this.mode === View.MODE_DRIVER)
         {
             const vehiclePos = this.game.physicalVehicle.position
-            const forward = this.game.physicalVehicle.forward
+            const quaternion = this.game.physicalVehicle.quaternion
 
-            const bonnetOffset = forward.clone().multiplyScalar(1.2)
-            bonnetOffset.y = 0.9
-
-            const targetPos = vehiclePos.clone().add(bonnetOffset)
+            // Driver eye inside the cockpit (matches VisualVehicle cockpit)
+            const eyeOffset = this.driverLook.eyeLocal.clone().applyQuaternion(quaternion)
+            const targetPos = vehiclePos.clone().add(eyeOffset)
             this.camera.position.copy(targetPos)
 
-            const lookDir = forward.clone()
-            lookDir.y = 0
-            const lookTarget = targetPos.clone().add(lookDir.multiplyScalar(10))
+            // Head rotation: pitch first, then yaw, then into car space
+            const look = this.driverLook.lookLocal.clone()
+            look.applyAxisAngle(this.driverLook._pitchAxis, this.driverLook.pitchSmoothed)
+            look.applyAxisAngle(this.driverLook._yawAxis, this.driverLook.yawSmoothed)
+            look.applyQuaternion(quaternion)
+
+            const lookTarget = targetPos.clone().add(look)
             this.camera.lookAt(lookTarget)
+
+            // Close near plane (dash is ~0.3m away) + head-zoom FOV
+            if(this.camera.near !== 0.05)
+            {
+                this.camera.near = 0.05
+                this.camera.updateProjectionMatrix()
+            }
+            if(Math.abs(this.camera.fov - this.driverLook.fovSmoothed) > 0.01)
+            {
+                this.camera.fov = this.driverLook.fovSmoothed
+                this.camera.updateProjectionMatrix()
+            }
+        }
+
+        // Restore default lens when leaving driver view
+        if(this.mode !== View.MODE_DRIVER)
+        {
+            let needsLensUpdate = false
+            if(this.camera.fov !== 25)
+            {
+                this.camera.fov = 25
+                needsLensUpdate = true
+            }
+            if(this.camera.near !== 0.1)
+            {
+                this.camera.near = 0.1
+                needsLensUpdate = true
+            }
+            if(needsLensUpdate)
+                this.camera.updateProjectionMatrix()
         }
 
         // Cameras matrices

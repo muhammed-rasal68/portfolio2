@@ -6,6 +6,8 @@ import Keyboard from './Keyboard.js'
 import { InteractiveButtons } from './InteractiveButtons.js'
 import { Wheel } from './Wheel.js'
 import { Nipple } from './Nipple.js'
+import { MobileArrows } from './MobileArrows.js'
+import { View } from '../View.js'
 import ObservableSet from '../utilities/ObservableSet.js'
 
 export class Inputs
@@ -46,6 +48,7 @@ export class Inputs
         this.setWheel()
         this.setInteractiveButtons()
         this.setNipple()
+        this.setMobileArrows()
 
         this.addActions(actions)
         
@@ -164,6 +167,61 @@ export class Inputs
                 
             this.nipple.updateFromPointer(this.pointer, action)
         })
+    }
+
+    setMobileArrows()
+    {
+        this.mobileArrows = new MobileArrows(this.game)
+
+        // Show arrows on touch mode in non-fixed camera modes
+        this.events.on('modeChange', () =>
+        {
+            this._updateMobileArrowsVisibility()
+        })
+
+        // Listen for camera mode changes once view is ready
+        const waitForView = () =>
+        {
+            if(this.game.view)
+            {
+                this.game.view.events.on('modeChange', () =>
+                {
+                    this._updateMobileArrowsVisibility()
+                })
+                this._updateMobileArrowsVisibility()
+            }
+            else
+            {
+                requestAnimationFrame(waitForView)
+            }
+        }
+        waitForView()
+    }
+
+    _updateMobileArrowsVisibility()
+    {
+        if(!this.game.view || !this.mobileArrows || !this.nipple)
+            return
+
+        // Arrows only on touch devices AND only when actually driving
+        // (forward / directive / driver). In fixed map mode the 3D nipple
+        // joystick is the drive control, so arrows stay hidden there.
+        const isTouch = this.mode === Inputs.MODE_TOUCH
+        const isDrivingView = this.game.view.mode !== View.MODE_FIXED
+
+        if(isTouch && isDrivingView)
+        {
+            this.mobileArrows.activate()
+            // Stop any in-progress nipple drag so it can't keep accelerating
+            this.nipple.active = false
+            this.nipple.progress = 0
+            this.nipple.hiddenByMode = true
+        }
+        else
+        {
+            this.mobileArrows.deactivate()
+            this.nipple.hiddenByMode = false
+        }
     }
 
     addActions(actions)
