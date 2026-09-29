@@ -16,9 +16,9 @@ export class PhysicsVehicle
         this.boostMultiplier = 2
         this.topSpeed = 5
         this.topSpeedBoost = 40
-        this.brakeAmplitude = 35
-        this.idleBrake = 0.06
-        this.reverseBrake = 0.4
+        this.brakeAmplitude = 14
+        this.idleBrake = 0.12
+        this.reverseBrake = 0.6
 
         this.sideward = new THREE.Vector3(0, 0, 1)
         this.upward = new THREE.Vector3(0, 1, 0)
@@ -461,10 +461,10 @@ export class PhysicsVehicle
         const overflowSpeed = Math.max(0, this.speed - topSpeed)
         let engineForce = (this.game.player.accelerating * (1 + this.game.player.boosting * this.boostMultiplier)) * this.engineForceAmplitude / (1 + overflowSpeed) * this.game.ticker.deltaScaled
 
-        // Brake
+        // Brake (progressive value 0..1 comes from Player, scaled by speed so it doesn't lock instantly at low speed)
         let brake = this.game.player.braking
 
-        if(!this.game.player.braking && Math.abs(this.game.player.accelerating) < 0.1)
+        if(this.game.player.braking < 0.01 && Math.abs(this.game.player.accelerating) < 0.1)
             brake = this.idleBrake
     
         if(
@@ -479,7 +479,8 @@ export class PhysicsVehicle
             engineForce = 0
         }
 
-        brake *= this.brakeAmplitude * this.game.ticker.deltaScaled
+        const brakeSpeedFactor = Math.min(1, 0.25 + (this.xzSpeed || 0) * 0.12)
+        brake *= this.brakeAmplitude * this.game.ticker.deltaScaled * brakeSpeedFactor
 
         // Steer
         const steer = this.game.player.steering * this.steeringAmplitude

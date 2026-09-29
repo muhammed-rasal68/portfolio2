@@ -524,10 +524,18 @@ export class Player
         this.accelerating = 0
         this.steering = 0
         this.boosting = 0
-        this.braking = 0
 
         if(this.state !== Player.STATE_DEFAULT)
+        {
+            // Decay brake while locked so it doesn't stay stuck at 1
+            const brakeDelta = Math.min(this.game.ticker.deltaScaled, 0.05)
+            this.braking += (0 - this.braking) * Math.min(1, brakeDelta * 8)
+
+            if(Math.abs(this.braking) < 0.002)
+                this.braking = 0
+
             return
+        }
 
         /**
          * Accelerating
@@ -545,12 +553,20 @@ export class Player
             this.boosting = 1
 
         /**
-         * Braking
+         * Braking (progressive ramp so tapping brake doesn't instantly lock the wheels)
          */
-        if(this.game.inputs.actions.get('brake').active)
+        const brakeTarget = this.game.inputs.actions.get('brake').active ? 1 : 0
+        const brakeDelta = Math.min(this.game.ticker.deltaScaled, 0.05)
+        const brakeRate = brakeTarget > this.braking ? 3.5 : 8
+        this.braking += (brakeTarget - this.braking) * Math.min(1, brakeDelta * brakeRate)
+
+        if(Math.abs(brakeTarget - this.braking) < 0.002)
+            this.braking = brakeTarget
+
+        if(this.braking > 0.001)
         {
-            this.accelerating = 0
-            this.braking = 1
+            // Fade engine out as brake comes in instead of cutting it instantly
+            this.accelerating *= 1 - Math.min(1, this.braking)
         }
 
         /**
