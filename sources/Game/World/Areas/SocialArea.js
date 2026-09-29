@@ -24,6 +24,7 @@ export class SocialArea extends Area
         }
 
         this.setLinks()
+        this.setInstagramLogo()
         this.setFans()
         this.setOnlyFans()
         this.setStatue()
@@ -73,7 +74,7 @@ export class SocialArea extends Area
                 InteractivePoints.STATE_CONCEALED,
                 () =>
                 {
-                    if(link.name === 'GitHub')
+                    if(link.name === 'GitHub' || link.name === 'Mail' || link.name === 'Instagram')
                     {
                         window.open(link.url, '_blank')
                     }
@@ -107,6 +108,88 @@ export class SocialArea extends Area
                 }
             )
         }
+    }
+
+    setInstagramLogo()
+    {
+        // The BlueSky logo mesh is baked into areas-compressed.glb (node
+        // blueskyPhysicalDynamic -> Plane.090, palette material), so there is
+        // no separate texture file to swap. Re-skin that mesh in code with an
+        // Instagram badge, keeping the same geometry/physics pedestal.
+        let blueskyObject = null
+        for(const object of this.objects.items)
+        {
+            if(object.visual && object.visual.object3D.name.toLowerCase().startsWith('bluesky'))
+            {
+                blueskyObject = object
+                break
+            }
+        }
+
+        if(!blueskyObject)
+            return
+
+        const size = 512
+        const canvas = document.createElement('canvas')
+        canvas.width = size
+        canvas.height = size
+        const ctx = canvas.getContext('2d')
+
+        // Transparent background
+        ctx.clearRect(0, 0, size, size)
+
+        // Instagram gradient rounded square
+        const pad = 36
+        const grad = ctx.createLinearGradient(pad, size - pad, size - pad, pad)
+        grad.addColorStop(0, '#feda75')
+        grad.addColorStop(0.35, '#fa7e1e')
+        grad.addColorStop(0.6, '#d62976')
+        grad.addColorStop(0.8, '#962fbf')
+        grad.addColorStop(1, '#4f5bd5')
+
+        const roundRect = (x, y, w, h, r) =>
+        {
+            ctx.beginPath()
+            ctx.moveTo(x + r, y)
+            ctx.arcTo(x + w, y, x + w, y + h, r)
+            ctx.arcTo(x + w, y + h, x, y + h, r)
+            ctx.arcTo(x, y + h, x, y, r)
+            ctx.arcTo(x, y, x + w, y, r)
+            ctx.closePath()
+        }
+
+        roundRect(pad, pad, size - pad * 2, size - pad * 2, 120)
+        ctx.fillStyle = grad
+        ctx.fill()
+
+        // White camera outline
+        ctx.strokeStyle = '#ffffff'
+        ctx.lineWidth = 34
+        roundRect(116, 116, size - 232, size - 232, 90)
+        ctx.stroke()
+
+        // Lens
+        ctx.beginPath()
+        ctx.arc(size / 2, size / 2, 78, 0, Math.PI * 2)
+        ctx.lineWidth = 32
+        ctx.stroke()
+
+        // Flash dot
+        ctx.beginPath()
+        ctx.arc(size - 168, 168, 26, 0, Math.PI * 2)
+        ctx.fillStyle = '#ffffff'
+        ctx.fill()
+
+        const texture = new THREE.CanvasTexture(canvas)
+        texture.colorSpace = THREE.SRGBColorSpace
+
+        const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true })
+
+        blueskyObject.visual.object3D.traverse((child) =>
+        {
+            if(child.isMesh)
+                child.material = material
+        })
     }
 
     setFans()
