@@ -36,7 +36,7 @@ export class SocialArea extends Area
         const nameToPrefix = {
             'Mail': 'mail',
             'X': 'x',
-            'BlueSky': 'bluesky',
+            'Instagram': 'bluesky', // reuses BlueSky pedestal mesh position (no instagram mesh in GLB)
             'Discord': 'discord',
             'YouTube': 'youtube',
             'Twitch': 'twitch',

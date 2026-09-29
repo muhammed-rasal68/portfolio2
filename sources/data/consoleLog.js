@@ -23,8 +23,9 @@ const text = `
 
 ╔═ Socials ═══════════════╗
 ║ Mail           ⇒ sanurasal00@gmail.com
+║ Contact        ⇒ https://muhammed-rasal1.netlify.app/contact
 ║ X              ⇒ https://x.com/muhammed_rasal
-║ BlueSKy        ⇒ https://bsky.app/profile/muhammed-rasal.bsky.social
+║ Instagram      ⇒ https://www.instagram.com/sanuminu_/
 ║ Discord public ⇒ https://discord.com/channels/769928116701233152/1445064878384480288
 ║ Discord PM     ⇒ https://discord.com/users/202907325722263553
 ║ Youtube        ⇒ https://www.youtube.com/@MuhammedRasal
